@@ -1,4 +1,4 @@
-#include "BlockModel.h"
+#include "../data/BlockModel.h"
 
 BlockModel* BlockModelRegistry::loadModel(const std::string& modelName) {
 	return nullptr;

@@ -1,7 +1,7 @@
 #pragma once
 #include "../data/WorldData.h"
 #include "../data/MeshData.h"
-#include "BlockModel.h"
+#include "../data/BlockModel.h"
 #include <memory>
 
 enum class FaceDirection : uint8_t {

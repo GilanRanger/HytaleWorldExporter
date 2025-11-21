@@ -222,10 +222,10 @@ void GeometryGenerator::generateChunkMesh(const World* world, const Chunk* chunk
                 BlockState state;
 
                 // TODO: Mapping from blockId to the modelName
-                // TODO: Fetching BlockState
-                
                 //BlockModel* model = modelRegistry->getModel(modelName);
                 
+                // TODO: Fetching BlockState
+
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
                     FaceDirection face = static_cast<FaceDirection>(faceIdx);
 
@@ -249,7 +249,8 @@ void GeometryGenerator::generateBlockMesh(const World* world,
     // TODO: Get block state
     BlockState state;
 
-    // TODO: Get block model
+    // TODO: Mapping from blockId to the modelName
+    //BlockModel* model = modelRegistry->getModel(modelName);
     BlockModel* model;
     
     for (int faceIdx = 0; faceIdx < 6; faceIdx++) {

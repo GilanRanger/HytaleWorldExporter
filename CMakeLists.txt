@@ -12,7 +12,7 @@ endif()
 project ("HytaleToOBJ")
 
 # Add source to this project's executable.
-add_executable (HytaleToOBJ "src/HytaleToOBJ.cpp" "src/HytaleToOBJ.h" "src/data/WorldData.h" "src/data/MeshData.h" "src/geometry/BlockModel.h" "src/geometry/GeometryGenerator.h" "src/geometry/GeometryGenerator.cpp" "src/geometry/BlockModelRegistry.cpp")
+add_executable (HytaleToOBJ "src/HytaleToOBJ.cpp" "src/HytaleToOBJ.h" "src/data/WorldData.h" "src/data/MeshData.h" "src/data/BlockModel.h" "src/geometry/GeometryGenerator.h" "src/geometry/GeometryGenerator.cpp" "src/geometry/BlockModelRegistry.cpp" "src/output/OBJExporter.h" "src/output/OBJExporter.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HytaleToOBJ PROPERTY CXX_STANDARD 20)

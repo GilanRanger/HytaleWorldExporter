@@ -1,5 +1,5 @@
 #pragma once
-#include "../data/MeshData.h"
+#include "MeshData.h"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -7,15 +7,19 @@
 struct BlockModel {
 	std::string modelName;
 
-	Mesh mesh;
-
 	// Key: face name ("north", "south", "east", "west", "top", "bottom")
 	std::unordered_map < std::string, std::string> faceTextures;
 
 	bool isFullCube;
-
 	Vec3 boundsMin;
 	Vec3 boundsMax;
+
+	enum class RenderPass {
+		Opaque,
+		Transparent,
+		Cutout,
+		Liquid
+	};
 
 	BlockModel() : isFullCube(true),
 		boundsMin(0, 0, 0),
