@@ -1,0 +1,76 @@
+#include "Export.h"
+#include "data/BlockModel.h"
+#include "geometry/MeshBuilder.h"
+#include "output/OBJExporter.h"
+
+Export::Export(ExportConfig* config) : config(config) {}
+
+void Export::exportWorld()
+{
+    // Get world file
+    // Parse world file
+    World world;
+    std::vector<ChunkPos> selectedChunks;
+
+    // Gamedata/Worlddata
+        // Block id mappings
+    BlockIDMappings blockIDMappings;
+    // Parse and populate blockIDMappings
+
+    // For each selected chunk in data
+        // Create an empty Chunk struct
+        // Fill with PackedBlocks (blockID + state)
+        // Fill with block entities
+        // Store in world.chunks
+
+    // Parse assets to create BlockModels
+    BlockModelRegistry blockModelRegistry;
+    TextureRegistry textureRegistry;
+
+    // For each block type that appears in selected chunks:
+        // Load its model(s)
+        // Collect texture references
+
+    // Create texture atlas
+    TextureAtlas atlas;
+    //atlas.packTextures(textureRegistry.getAllTextures());
+
+    // Generate geometry
+    MeshBuilder meshBuilder(&blockModelRegistry, &blockIDMappings, &textureRegistry, &atlas);
+
+    std::vector<Mesh> chunkMeshes;
+
+    for (const ChunkPos& chunkPos : selectedChunks) {
+        Chunk* chunk = world.getChunk(chunkPos);
+        if (!chunk) continue;
+
+        Mesh chunkMesh;
+        meshBuilder.generateChunkMesh(&world, chunk, chunkMesh);
+
+        chunkMeshes.push_back(chunkMesh);
+    }
+
+    // Export OBJ file, MTL file, and atlas PNG
+    std::string outputFilename = config->outputName + ".obj";
+    OBJExporter::OBJExportOptions options;
+    options.outputDirectory = config->outputPath;
+    options.exportMTL = true;
+    options.exportTextures = true;
+    options.flipVCoordinate = true;
+
+    OBJExporter exporter;
+    bool success = exporter.exportMeshes(chunkMeshes, outputFilename, config->assetsPath, &atlas, options);
+
+    if (success) {
+        std::cout << "Export complete!\n";
+        std::cout << "  OBJ: " << config->outputPath << "/" << outputFilename << "\n";
+        std::cout << "  MTL: " << config->outputPath << "/" << config->outputName << ".mtl\n";
+        if (options.exportTextures) {
+            std::cout << "  Texture: " << config->outputPath << "/"
+                << config->outputName << "_atlas.png\n";
+        }
+    }
+    else {
+        std::cerr << "Export failed!\n";
+    }
+}

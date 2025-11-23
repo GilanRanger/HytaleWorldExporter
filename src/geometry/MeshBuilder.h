@@ -17,9 +17,11 @@ struct FaceOffset {
     int8_t x, y, z;
 };
 
-class GeometryGenerator {
+class MeshBuilder {
 private:
     BlockModelRegistry* modelRegistry;
+    BlockIDMappings* blockIDMappings;
+    TextureRegistry* textureRegistry;
     TextureAtlas* textureAtlas;
 
     static const FaceOffset FACE_OFFSETS[6];
@@ -27,17 +29,18 @@ private:
     bool shouldRenderFace(const World* world, 
         int32_t blockX, int32_t blockY, int32_t blockZ, FaceDirection face) const;
 
-    bool isBlockOpaque(BlockID blockId) const;
+    bool isBlockOpaque(PackedBlock blockId) const;
 
     void generateBlockFace(Mesh& outputMesh, const BlockModel& model, FaceDirection face,
-        int32_t worldX, int32_t worldY, int32_t worldZ, BlockState state) const;
+        int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t state) const;
 
-    Vec3 rotateVertex(const Vec3& vertex, BlockState state) const;
+    Vec3 rotateVertex(const Vec3& vertex, uint16_t state) const;
 
     Vec2 calculateUV(const std::string& textureName, float localU, float localV) const;
 
 public:
-    GeometryGenerator(BlockModelRegistry* registry, TextureAtlas* atlas);
+    MeshBuilder(BlockModelRegistry* registry, BlockIDMappings* blockIDMappings, 
+        TextureRegistry* textureRegistry, TextureAtlas* atlas);
 
     void generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh);
 

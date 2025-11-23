@@ -6,13 +6,13 @@
 #include "stb/stb_image_write.h"
 
 bool OBJExporter::exportMesh(const Mesh& mesh, const std::string& filename, 
-    const std::string& assetsPath, const TextureAtlas* atlas, const ExportOptions& options) {
+    const std::string& assetsPath, const TextureAtlas* atlas, const OBJExportOptions& options) {
 	std::vector<Mesh> meshes = { mesh };
 	return exportMeshes(meshes, filename, assetsPath, atlas, options);
 }
 
 bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::string& filename, 
-    const std::string& assetsPath, const TextureAtlas* atlas, const ExportOptions& options) {
+    const std::string& assetsPath, const TextureAtlas* atlas, const OBJExportOptions& options) {
 	if (meshes.empty()) {
 		std::cerr << "No meshes to export" << std::endl;
 		return false;
@@ -58,7 +58,7 @@ bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::strin
 bool OBJExporter::writeOBJ(std::ofstream& file,
     const std::vector<Mesh>& meshes,
     const std::string& mtlFilename,
-    const ExportOptions& options) {
+    const OBJExportOptions& options) {
     file << "# Voxel Mesh Export" << std::endl;
     file << "# Meshes: " << meshes.size() << std::endl;
     file << std::endl;
@@ -139,7 +139,7 @@ bool OBJExporter::writeOBJ(std::ofstream& file,
 bool OBJExporter::writeMTL(const std::string& filename,
     const std::vector<Mesh>& meshes,
     const TextureAtlas* atlas,
-    const ExportOptions& options) {
+    const OBJExportOptions& options) {
     std::ofstream mtlFile(filename);
     if (!mtlFile.is_open()) {
         std::cerr << "Failed to open MTL file: " << filename << std::endl;

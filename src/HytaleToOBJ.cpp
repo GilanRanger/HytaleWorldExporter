@@ -1,4 +1,4 @@
-﻿#include "HytaleToOBJ.h"
+﻿#include "Export.h"
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -120,7 +120,8 @@ int main(int argc, char* argv[]) {
         << "Chunk Min:  " << config.chunkMinX << ", " << config.chunkMinY << "\n"
         << "Chunk Max:  " << config.chunkMaxX << ", " << config.chunkMaxY << "\n";
 
-    // TODO: Call exporter
+    Export worldExport(&config);
+    worldExport.exportWorld();
 
     return 0;
 }

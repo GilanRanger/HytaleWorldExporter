@@ -1,7 +1,7 @@
-#include "GeometryGenerator.h"
+#include "MeshBuilder.h"
 #include <cmath>
 
-const FaceOffset GeometryGenerator::FACE_OFFSETS[6]{
+const FaceOffset MeshBuilder::FACE_OFFSETS[6]{
     {0, 0, -1},  // NORTH (-Z)
     {0, 0, 1},   // SOUTH (+Z)
     {1, 0, 0},   // EAST (+X)
@@ -10,15 +10,16 @@ const FaceOffset GeometryGenerator::FACE_OFFSETS[6]{
     {0, -1, 0}   // BOTTOM (-Y)
 };
 
-GeometryGenerator::GeometryGenerator(BlockModelRegistry* registry, TextureAtlas* atlas)
-    : modelRegistry(registry), textureAtlas(atlas) {}
+MeshBuilder::MeshBuilder(BlockModelRegistry* registry, BlockIDMappings* blockIDMappings,
+    TextureRegistry* textureRegistry, TextureAtlas* atlas)
+    : modelRegistry(registry), blockIDMappings(blockIDMappings), textureRegistry(textureRegistry), textureAtlas(atlas) {}
 
-bool GeometryGenerator::isBlockOpaque(BlockID blockId) const {
+bool MeshBuilder::isBlockOpaque(PackedBlock blockId) const {
     // TODO: Implement for transparent and non-full blocks (depending on rotation)
     return blockId != 0;
 }
 
-bool GeometryGenerator::shouldRenderFace(const World* world, int32_t blockX, int32_t blockY, int32_t blockZ,
+bool MeshBuilder::shouldRenderFace(const World* world, int32_t blockX, int32_t blockY, int32_t blockZ,
     FaceDirection face) const {
     const FaceOffset& offset = FACE_OFFSETS[static_cast<int>(face)];
 
@@ -26,12 +27,12 @@ bool GeometryGenerator::shouldRenderFace(const World* world, int32_t blockX, int
     int32_t neighborY = blockY + offset.y;
     int32_t neighborZ = blockZ + offset.z;
 
-    BlockID neighborBlock = world->getBlockAt(neighborX, neighborY, neighborZ);
+    PackedBlock neighborBlock = world->getPackedBlockAt(neighborX, neighborY, neighborZ);
     return !isBlockOpaque(neighborBlock);
 }
 
-void GeometryGenerator::generateBlockFace(Mesh& outputMesh, const BlockModel& model, FaceDirection face,
-    int32_t worldX, int32_t worldY, int32_t worldZ, BlockState state) const {
+void MeshBuilder::generateBlockFace(Mesh& outputMesh, const BlockModel& model, FaceDirection face,
+    int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t state) const {
     // Each face is a quad with 4 vertices, defined counter-clockwise when viewed from outside
     Vertex v0, v1, v2, v3;
     std::string faceTextureName;
@@ -182,12 +183,12 @@ void GeometryGenerator::generateBlockFace(Mesh& outputMesh, const BlockModel& mo
     outputMesh.addFace(quadFace);
 }
 
-Vec3 GeometryGenerator::rotateVertex(const Vec3& vertex, BlockState state) const {
+Vec3 MeshBuilder::rotateVertex(const Vec3& vertex, uint16_t state) const {
     // TODO: Rotate vertex based on BlockState (may need to support flipped/mirrored?)
     return vertex;
 }
 
-Vec2 GeometryGenerator::calculateUV(const std::string& textureName, float localU, float localV) const {
+Vec2 MeshBuilder::calculateUV(const std::string& textureName, float localU, float localV) const {
     Vec2 uvMin, uvMax;
 
     if (textureAtlas->getTextureUVs(textureName, uvMin, uvMax)) {
@@ -201,25 +202,25 @@ Vec2 GeometryGenerator::calculateUV(const std::string& textureName, float localU
     return Vec2(0, 0);
 }
 
-void GeometryGenerator::generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh) {
+void MeshBuilder::generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh) {
     outputMesh.clear();
 
     for (uint8_t y = 0; y < CHUNK_SIZE_Y; y++) {
         for (uint8_t z = 0; z < CHUNK_SIZE_Z; z++) {
             for (uint8_t x = 0; x < CHUNK_SIZE_X; x++) {
-                BlockID blockId = chunk->getBlock(x, y, z);
+                PackedBlock blockId = chunk->getPackedBlock(x, y, z);
 
                 // Skip air
                 if (blockId == 0) continue;
 
                 int32_t worldX = chunk->position.x * CHUNK_SIZE_X + x;
                 int32_t worldY = chunk->position.y * CHUNK_SIZE_Y + y;
-                int32_t worldZ = chunk->position.z * CHUNK_SIZE_Z + z;
+                int32_t worldZ = z;
 
 
                 std::string modelName;
                 BlockModel* model;
-                BlockState state;
+                uint16_t state;
 
                 // TODO: Mapping from blockId to the modelName
                 //BlockModel* model = modelRegistry->getModel(modelName);
@@ -238,16 +239,16 @@ void GeometryGenerator::generateChunkMesh(const World* world, const Chunk* chunk
     }
 }
 
-void GeometryGenerator::generateBlockMesh(const World* world,
+void MeshBuilder::generateBlockMesh(const World* world,
     int32_t blockX, int32_t blockY, int32_t blockZ, Mesh& outputMesh) {
     outputMesh.clear();
 
-    BlockID blockId = world->getBlockAt(blockX, blockY, blockZ);
+    uint16_t blockId = world->getBlockIDAt(blockX, blockY, blockZ);
 
     if (blockId == 0) return;
 
     // TODO: Get block state
-    BlockState state;
+    uint16_t state = world->getBlockStateAt(blockX, blockY, blockZ);
 
     // TODO: Mapping from blockId to the modelName
     //BlockModel* model = modelRegistry->getModel(modelName);

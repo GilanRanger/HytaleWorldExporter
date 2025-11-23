@@ -32,6 +32,8 @@ private:
 	std::unordered_map<std::string, BlockModel> models;
 
 public:
+	BlockModelRegistry();
+
 	BlockModel* loadModel(const std::string& modelName);
 
 	BlockModel* getModel(const std::string& modelName);
@@ -41,11 +43,17 @@ public:
 	void createDefaultCubeModel();
 };
 
+class TextureRegistry {
+
+};
+
 class BlockIDMappings {
 private:
-	std::unordered_map<BlockID, std::string> blockNames;
+	std::unordered_map<PackedBlock, std::string> blockNames;
 public:
+	BlockIDMappings();
+	
 	void parseBlockList(const std::string& data);
 
-	std::string getBlockName(const BlockID& blockId);
+	std::string getBlockName(PackedBlock blockId);
 };
