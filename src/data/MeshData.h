@@ -37,49 +37,6 @@ struct Face {
 	}
 };
 
-// UV bounds for a texture within an atlas
-struct AtlasRegion {
-    Vec2 uvMin;     // Top-left UV coordinate (0.0 - 1.0)
-    Vec2 uvMax;     // Bottom-right UV coordinate (0.0 - 1.0)
-    uint32_t pixelWidth;
-    uint32_t pixelHeight;
-};
-
-// Texture atlas information
-struct TextureAtlas {
-    uint32_t atlasWidth;
-    uint32_t atlasHeight;
-    uint32_t standardTileSize;  // Standard block texture size 32x32
-
-    std::vector<std::string> textureNames;
-
-    std::unordered_map<std::string, AtlasRegion> textureRegions;
-
-    inline bool getTextureUVs(const std::string& textureName, Vec2& uvMin, Vec2& uvMax) const {
-        auto it = textureRegions.find(textureName);
-        if (it != textureRegions.end()) {
-            uvMin = it->second.uvMin;
-            uvMax = it->second.uvMax;
-            return true;
-        }
-        return false;
-    }
-
-    inline void addTextureRegion(const std::string& name,
-        uint32_t pixelX, uint32_t pixelY,
-        uint32_t width, uint32_t height) {
-        AtlasRegion region;
-        region.uvMin.u = static_cast<float>(pixelX) / atlasWidth;
-        region.uvMin.v = static_cast<float>(pixelY) / atlasHeight;
-        region.uvMax.u = static_cast<float>(pixelX + width) / atlasWidth;
-        region.uvMax.v = static_cast<float>(pixelY + height) / atlasHeight;
-        region.pixelWidth = width;
-        region.pixelHeight = height;
-
-        textureRegions[name] = region;
-    }
-};
-
 struct Mesh {
 	std::vector<Vertex> vertices;
 	std::vector<Face> faces;

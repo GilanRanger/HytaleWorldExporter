@@ -1,5 +1,6 @@
 #pragma once
 #include "../data/MeshData.h"
+#include "../data/BlockModel.h"
 #include <string>
 #include <fstream>
 #include <vector>
@@ -16,11 +17,11 @@ public:
 	};
 
 	static bool exportMesh(const Mesh& mesh, const std::string& filename, 
-		const std::string& assetsPath, const TextureAtlas* atlas = nullptr, 
+		const std::string& assetsPath, const TextureRegistry* textureRegistry,
 		const OBJExportOptions& options = OBJExportOptions());
 
 	static bool exportMeshes(const std::vector<Mesh>& meshes, const std::string& filename, 
-		const std::string& assetsPath, const TextureAtlas* atlas = nullptr, 
+		const std::string& assetsPath, const TextureRegistry* textureRegistry,
 		const OBJExportOptions& options = OBJExportOptions());
 
 private:
@@ -28,8 +29,8 @@ private:
 		const std::string& mtlFilename, const OBJExportOptions& options);
 
 	static bool writeMTL(const std::string& filename, const std::vector<Mesh>& meshes,
-		const TextureAtlas* atlas, const OBJExportOptions& options);
+		const TextureRegistry* textureRegistry, const OBJExportOptions& options);
 
-	static bool exportTextureAtlas(const TextureAtlas& atlas, const std::string& assetsPath,
+	static bool exportTextureAtlas(const TextureRegistry* textureRegistry, const std::string& assetsPath,
 		const std::string& filename);
 };

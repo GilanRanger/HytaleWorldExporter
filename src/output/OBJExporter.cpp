@@ -6,13 +6,13 @@
 #include "stb/stb_image_write.h"
 
 bool OBJExporter::exportMesh(const Mesh& mesh, const std::string& filename, 
-    const std::string& assetsPath, const TextureAtlas* atlas, const OBJExportOptions& options) {
+    const std::string& assetsPath, const TextureRegistry* textureRegistry, const OBJExportOptions& options) {
 	std::vector<Mesh> meshes = { mesh };
-	return exportMeshes(meshes, filename, assetsPath, atlas, options);
+	return exportMeshes(meshes, filename, assetsPath, textureRegistry, options);
 }
 
 bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::string& filename, 
-    const std::string& assetsPath, const TextureAtlas* atlas, const OBJExportOptions& options) {
+    const std::string& assetsPath, const TextureRegistry* textureRegistry, const OBJExportOptions& options) {
 	if (meshes.empty()) {
 		std::cerr << "No meshes to export" << std::endl;
 		return false;
@@ -40,13 +40,13 @@ bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::strin
 	objFile.close();
 
 	if (options.exportMTL) {
-		if (!writeMTL(mtlPath, meshes, atlas, options)) {
+		if (!writeMTL(mtlPath, meshes, textureRegistry, options)) {
 			return false;
 		}
 
-		if (options.exportTextures && atlas) {
+		if (options.exportTextures) {
 			std::string texturePath = options.outputDirectory + baseName + "_atlas.png";
-			if (!exportTextureAtlas(*atlas, assetsPath, texturePath)) {
+			if (!exportTextureAtlas(textureRegistry, assetsPath, texturePath)) {
 				std::cerr << "Warning: Failed to export texture atlas" << std::endl;
 			}
 		}
@@ -138,7 +138,7 @@ bool OBJExporter::writeOBJ(std::ofstream& file,
 
 bool OBJExporter::writeMTL(const std::string& filename,
     const std::vector<Mesh>& meshes,
-    const TextureAtlas* atlas,
+    const TextureRegistry* textureRegistry,
     const OBJExportOptions& options) {
     std::ofstream mtlFile(filename);
     if (!mtlFile.is_open()) {
@@ -169,7 +169,7 @@ bool OBJExporter::writeMTL(const std::string& filename,
     }
 
     // Write materials
-    std::string atlasTexture = options.exportTextures && atlas ?
+    std::string atlasTexture = options.exportTextures ?
         (filename.substr(0, filename.size() - 4) + "_atlas.png") : "";
 
     for (const auto& pair : writtenMaterials) {
@@ -197,37 +197,7 @@ bool OBJExporter::writeMTL(const std::string& filename,
     return true;
 }
 
-bool OBJExporter::exportTextureAtlas(const TextureAtlas& atlas, const std::string& assetsPath,
+bool OBJExporter::exportTextureAtlas(const TextureRegistry* textureRegistry, const std::string& assetsPath,
     const std::string& filename) {
-    std::vector<unsigned char> atlasPixels(atlas.atlasWidth * atlas.atlasHeight * 4, 0);
-
-    for (const auto& [name, region] : atlas.textureRegions) {
-        // There will have to be a more in-depth system for fetching the textures, likely from BlockModel data
-        std::string texturePath = assetsPath + "/" + name + ".png";
-
-        int width, height, channels;
-        unsigned char* srcPixels = stbi_load(texturePath.c_str(), &width, &height, &channels, 4);
-
-        if (!srcPixels) {
-            std::cerr << "Failed to load texture: " << texturePath << std::endl;
-            continue;
-        }
-
-        // Convert back to UV coordintes
-        uint32_t destX = static_cast<uint32_t>(region.uvMin.u * atlas.atlasWidth);
-        uint32_t destY = static_cast<uint32_t>(region.uvMax.v * atlas.atlasHeight);
-
-        // Blit by row
-        for (uint32_t y = 0; y < region.pixelHeight; y++) {
-            size_t srcOffset = y * width * 4;
-            size_t destOffset = ((destY + y) * atlas.atlasWidth + destX) * 4;
-
-            memcpy(&atlasPixels[destOffset], &srcPixels[srcOffset], region.pixelWidth * 4);
-        }
-
-        stbi_image_free(srcPixels);
-    }
-
-    return stbi_write_png(filename.c_str(), atlas.atlasWidth, atlas.atlasHeight, 4, 
-        atlasPixels.data(), atlas.atlasWidth * 4);
+    
 }

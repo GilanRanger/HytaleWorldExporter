@@ -32,11 +32,10 @@ void Export::exportWorld()
         // Collect texture references
 
     // Create texture atlas
-    TextureAtlas atlas;
-    //atlas.packTextures(textureRegistry.getAllTextures());
+    textureRegistry.beginBuild(1024, 1024, 32);
 
     // Generate geometry
-    MeshBuilder meshBuilder(&blockModelRegistry, &blockIDMappings, &textureRegistry, &atlas);
+    MeshBuilder meshBuilder(&blockModelRegistry, &blockIDMappings, &textureRegistry);
 
     std::vector<Mesh> chunkMeshes;
 
@@ -59,7 +58,7 @@ void Export::exportWorld()
     options.flipVCoordinate = true;
 
     OBJExporter exporter;
-    bool success = exporter.exportMeshes(chunkMeshes, outputFilename, config->assetsPath, &atlas, options);
+    bool success = exporter.exportMeshes(chunkMeshes, outputFilename, config->assetsPath, &textureRegistry, options);
 
     if (success) {
         std::cout << "Export complete!\n";

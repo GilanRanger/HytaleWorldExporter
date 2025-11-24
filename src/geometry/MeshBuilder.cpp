@@ -11,8 +11,8 @@ const FaceOffset MeshBuilder::FACE_OFFSETS[6]{
 };
 
 MeshBuilder::MeshBuilder(BlockModelRegistry* registry, BlockIDMappings* blockIDMappings,
-    TextureRegistry* textureRegistry, TextureAtlas* atlas)
-    : modelRegistry(registry), blockIDMappings(blockIDMappings), textureRegistry(textureRegistry), textureAtlas(atlas) {}
+    TextureRegistry* textureRegistry)
+    : modelRegistry(registry), blockIDMappings(blockIDMappings), textureRegistry(textureRegistry) {}
 
 bool MeshBuilder::isBlockOpaque(PackedBlock blockId) const {
     // TODO: Implement for transparent and non-full blocks (depending on rotation)
@@ -191,7 +191,7 @@ Vec3 MeshBuilder::rotateVertex(const Vec3& vertex, uint16_t state) const {
 Vec2 MeshBuilder::calculateUV(const std::string& textureName, float localU, float localV) const {
     Vec2 uvMin, uvMax;
 
-    if (textureAtlas->getTextureUVs(textureName, uvMin, uvMax)) {
+    if (textureRegistry->getTextureUVs(textureName, uvMin, uvMax)) {
         Vec2 result;
         result.u = uvMin.u + (uvMax.u - uvMin.u) * localU;
         result.v = uvMin.v + (uvMax.v - uvMin.v) * localV;
@@ -214,8 +214,8 @@ void MeshBuilder::generateChunkMesh(const World* world, const Chunk* chunk, Mesh
                 if (blockId == 0) continue;
 
                 int32_t worldX = chunk->position.x * CHUNK_SIZE_X + x;
-                int32_t worldY = chunk->position.y * CHUNK_SIZE_Y + y;
-                int32_t worldZ = z;
+                int32_t worldY = y;
+                int32_t worldZ = chunk->position.z * CHUNK_SIZE_Z + z;
 
 
                 std::string modelName;

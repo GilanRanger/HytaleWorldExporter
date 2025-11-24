@@ -22,7 +22,6 @@ private:
     BlockModelRegistry* modelRegistry;
     BlockIDMappings* blockIDMappings;
     TextureRegistry* textureRegistry;
-    TextureAtlas* textureAtlas;
 
     static const FaceOffset FACE_OFFSETS[6];
 
@@ -40,7 +39,7 @@ private:
 
 public:
     MeshBuilder(BlockModelRegistry* registry, BlockIDMappings* blockIDMappings, 
-        TextureRegistry* textureRegistry, TextureAtlas* atlas);
+        TextureRegistry* textureRegistry);
 
     void generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh);
 
