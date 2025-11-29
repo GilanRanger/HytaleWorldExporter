@@ -10,7 +10,7 @@ const FaceOffset MeshBuilder::FACE_OFFSETS[6]{
     {0, -1, 0}   // BOTTOM (-Y)
 };
 
-MeshBuilder::MeshBuilder(BlockModelRegistry* registry, BlockIDMappings* blockIDMappings,
+MeshBuilder::MeshBuilder(ModelRegistry* registry, BlockIDMappings* blockIDMappings,
     TextureRegistry* textureRegistry)
     : modelRegistry(registry), blockIDMappings(blockIDMappings), textureRegistry(textureRegistry) {}
 
@@ -20,7 +20,7 @@ bool MeshBuilder::isBlockOpaque(PackedBlock blockId) const {
 }
 
 bool MeshBuilder::shouldRenderFace(const World* world, int32_t blockX, int32_t blockY, int32_t blockZ,
-    FaceDirection face) const {
+    Cube::FaceDirection face) const {
     const FaceOffset& offset = FACE_OFFSETS[static_cast<int>(face)];
 
     int32_t neighborX = blockX + offset.x;
@@ -31,139 +31,89 @@ bool MeshBuilder::shouldRenderFace(const World* world, int32_t blockX, int32_t b
     return !isBlockOpaque(neighborBlock);
 }
 
-void MeshBuilder::generateBlockFace(Mesh& outputMesh, const BlockModel& model, FaceDirection face,
+void MeshBuilder::generateBlockFace(Mesh& outputMesh, const Model& model, Cube::FaceDirection face,
     int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t state) const {
-    // Each face is a quad with 4 vertices, defined counter-clockwise when viewed from outside
+    
+    if (model.elements.empty()) return;
+
+    const Cube& cube = model.elements[0];
+    const CubeFace& faceData = cube.faces[static_cast<int>(face)];
+
+    std::string textureName = resolveTexture(faceData.texture, model.textures);
+
     Vertex v0, v1, v2, v3;
-    std::string faceTextureName;
 
-    // Get the texture for face
     switch (face) {
-        case FaceDirection::NORTH: // -Z
-            faceTextureName = model.faceTextures.count("north") ? model.faceTextures.at("north") : "default";
-
+        case Cube::FaceDirection::north: // -Z
             v0.position = Vec3(0, 0, 0);
             v1.position = Vec3(1, 0, 0);
             v2.position = Vec3(1, 1, 0);
             v3.position = Vec3(0, 1, 0);
-
-            // -Z direction
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(0, 0, -1);
-            
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
-        
-        case FaceDirection::SOUTH: // +Z face
-            faceTextureName = model.faceTextures.count("south") ?
-                model.faceTextures.at("south") : "default";
 
+        case Cube::FaceDirection::south: // +Z
             v0.position = Vec3(1, 0, 1);
             v1.position = Vec3(0, 0, 1);
             v2.position = Vec3(0, 1, 1);
             v3.position = Vec3(1, 1, 1);
-
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(0, 0, 1);
-
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
 
-        case FaceDirection::EAST: // +X face
-            faceTextureName = model.faceTextures.count("east") ?
-                model.faceTextures.at("east") : "default";
-
+        case Cube::FaceDirection::east: // +X
             v0.position = Vec3(1, 0, 0);
             v1.position = Vec3(1, 0, 1);
             v2.position = Vec3(1, 1, 1);
             v3.position = Vec3(1, 1, 0);
-
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(1, 0, 0);
-
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
 
-        case FaceDirection::WEST: // -X face
-            faceTextureName = model.faceTextures.count("west") ?
-                model.faceTextures.at("west") : "default";
-
+        case Cube::FaceDirection::west: // -X
             v0.position = Vec3(0, 0, 1);
             v1.position = Vec3(0, 0, 0);
             v2.position = Vec3(0, 1, 0);
             v3.position = Vec3(0, 1, 1);
-
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(-1, 0, 0);
-
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
 
-        case FaceDirection::TOP: // +Y face
-            faceTextureName = model.faceTextures.count("top") ?
-                model.faceTextures.at("top") : "default";
-
+        case Cube::FaceDirection::up: // +Y
             v0.position = Vec3(0, 1, 0);
             v1.position = Vec3(1, 1, 0);
             v2.position = Vec3(1, 1, 1);
             v3.position = Vec3(0, 1, 1);
-
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(0, 1, 0);
-
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
 
-        case FaceDirection::BOTTOM: // -Y face
-            faceTextureName = model.faceTextures.count("bottom") ?
-                model.faceTextures.at("bottom") : "default";
-
+        case Cube::FaceDirection::down: // -Y
             v0.position = Vec3(0, 0, 1);
             v1.position = Vec3(1, 0, 1);
             v2.position = Vec3(1, 0, 0);
             v3.position = Vec3(0, 0, 0);
-
             v0.normal = v1.normal = v2.normal = v3.normal = Vec3(0, -1, 0);
-
-            v0.uv = calculateUV(faceTextureName, 0, 1);
-            v1.uv = calculateUV(faceTextureName, 1, 1);
-            v2.uv = calculateUV(faceTextureName, 1, 0);
-            v3.uv = calculateUV(faceTextureName, 0, 0);
             break;
     }
 
-    // Apply rotation based on BlockState
+    // Apply UVs
+    v0.uv = Vec2(faceData.uv.x, faceData.uv.w); // min U, max V (bottom-left)
+    v1.uv = Vec2(faceData.uv.z, faceData.uv.w); // max U, max V (bottom-right)
+    v2.uv = Vec2(faceData.uv.z, faceData.uv.y); // max U, min V (top-right)
+    v3.uv = Vec2(faceData.uv.x, faceData.uv.y); // min U, min V (top-left)
+
+    if (faceData.uvRotation != 0) {
+        rotateUVs(v0.uv, v1.uv, v2.uv, v3.uv, faceData.uvRotation);
+    }
+
+    // Rotation based on Block state
     v0.position = rotateVertex(v0.position, state);
     v1.position = rotateVertex(v1.position, state);
     v2.position = rotateVertex(v2.position, state);
     v3.position = rotateVertex(v3.position, state);
 
     // Translate to world position
-    v0.position.x += worldX;
-    v0.position.y += worldY;
-    v0.position.z += worldZ;
-
-    v1.position.x += worldX;
-    v1.position.y += worldY;
-    v1.position.z += worldZ;
-
-    v2.position.x += worldX;
-    v2.position.y += worldY;
-    v2.position.z += worldZ;
-
-    v3.position.x += worldX;
-    v3.position.y += worldY;
-    v3.position.z += worldZ;
+    v0.position += Vec3(worldX, worldY, worldZ);
+    v1.position += Vec3(worldX, worldY, worldZ);
+    v2.position += Vec3(worldX, worldY, worldZ);
+    v3.position += Vec3(worldX, worldY, worldZ);
 
     // Add vertices to mesh and fetch indices
     uint32_t idx0 = outputMesh.addVertex(v0);
@@ -171,16 +121,47 @@ void MeshBuilder::generateBlockFace(Mesh& outputMesh, const BlockModel& model, F
     uint32_t idx2 = outputMesh.addVertex(v2);
     uint32_t idx3 = outputMesh.addVertex(v3);
 
-    // Create the quad
-    Face quadFace;
+    // Create quad
+    MeshFace quadFace;
     quadFace.indices[0] = idx0;
     quadFace.indices[1] = idx1;
     quadFace.indices[2] = idx2;
     quadFace.indices[3] = idx3;
     quadFace.vertexCount = 4;
-    quadFace.material = faceTextureName;
+    quadFace.material = textureName;
 
     outputMesh.addFace(quadFace);
+}
+
+// For fetching the texture from the '#' reference used (based on Vintage Story)
+std::string MeshBuilder::resolveTexture(const std::string& textureRef,
+    const std::unordered_map<std::string, std::string>& textures) const {
+
+    if (textureRef.empty() || textureRef[0] != '#') {
+        return textureRef;
+    }
+
+    // Remove '#' and look up in textures map
+    std::string key = textureRef.substr(1);
+    auto it = textures.find(key);
+    if (it != textures.end()) {
+        return it->second;
+    }
+
+    return "default";
+}
+
+void MeshBuilder::rotateUVs(Vec2& uv0, Vec2& uv1, Vec2& uv2, Vec2& uv3, int rotation) const {
+    // Rotate in 90-degree increments clockwise
+    int steps = (rotation / 90) % 4;
+
+    for (int i = 0; i < steps; i++) {
+        Vec2 temp = uv0;
+        uv0 = uv3;
+        uv3 = uv2;
+        uv2 = uv1;
+        uv1 = temp;
+    }
 }
 
 Vec3 MeshBuilder::rotateVertex(const Vec3& vertex, uint16_t state) const {
@@ -219,7 +200,7 @@ void MeshBuilder::generateChunkMesh(const World* world, const Chunk* chunk, Mesh
 
 
                 std::string modelName;
-                BlockModel* model;
+                Model* model;
                 uint16_t state;
 
                 // TODO: Mapping from blockId to the modelName
@@ -228,7 +209,7 @@ void MeshBuilder::generateChunkMesh(const World* world, const Chunk* chunk, Mesh
                 // TODO: Fetching BlockState
 
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
-                    FaceDirection face = static_cast<FaceDirection>(faceIdx);
+                    Cube::FaceDirection face = static_cast<Cube::FaceDirection> (faceIdx);
 
                     if (shouldRenderFace(world, worldX, worldY, worldZ, face)) {
                         generateBlockFace(outputMesh, *model, face, worldX, worldY, worldZ, state);
@@ -252,10 +233,10 @@ void MeshBuilder::generateBlockMesh(const World* world,
 
     // TODO: Mapping from blockId to the modelName
     //BlockModel* model = modelRegistry->getModel(modelName);
-    BlockModel* model;
+    Model* model;
     
     for (int faceIdx = 0; faceIdx < 6; faceIdx++) {
-        FaceDirection face = static_cast<FaceDirection>(faceIdx);
+        Cube::FaceDirection face = static_cast<Cube::FaceDirection>(faceIdx);
 
         if (shouldRenderFace(world, blockX, blockY, blockZ, face)) {
             generateBlockFace(outputMesh, *model, face, blockX, blockY, blockZ, state);

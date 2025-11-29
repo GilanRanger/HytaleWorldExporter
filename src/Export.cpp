@@ -24,7 +24,7 @@ void Export::exportWorld()
         // Store in world.chunks
 
     // Parse assets to create BlockModels
-    BlockModelRegistry blockModelRegistry;
+    ModelRegistry blockModelRegistry;
     TextureRegistry textureRegistry;
 
     // For each block type that appears in selected chunks:

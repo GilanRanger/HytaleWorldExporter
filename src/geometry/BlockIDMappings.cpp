@@ -1,4 +1,4 @@
-#include "../data/BlockModel.h"
+#include "../data/Model.h"
 
 BlockIDMappings::BlockIDMappings() {}
 
