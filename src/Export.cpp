@@ -1,7 +1,8 @@
 #include "Export.h"
-#include "data/BlockModel.h"
+#include "data/Model.h"
 #include "geometry/MeshBuilder.h"
 #include "output/OBJExporter.h"
+#include <iostream>
 
 Export::Export(ExportConfig* config) : config(config) {}
 

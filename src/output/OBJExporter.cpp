@@ -199,5 +199,5 @@ bool OBJExporter::writeMTL(const std::string& filename,
 
 bool OBJExporter::exportTextureAtlas(const TextureRegistry* textureRegistry, const std::string& assetsPath,
     const std::string& filename) {
-    
+    return false;
 }

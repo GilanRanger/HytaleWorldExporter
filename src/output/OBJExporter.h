@@ -1,6 +1,6 @@
 #pragma once
 #include "../data/MeshData.h"
-#include "../data/BlockModel.h"
+#include "../data/Model.h"
 #include <string>
 #include <fstream>
 #include <vector>

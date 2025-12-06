@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 #define CHUNK_SIZE_X 32
 #define CHUNK_SIZE_Y 320
@@ -15,7 +16,6 @@ struct BlockEntity;
 // bits 0-15:  BlockID
 // bits 16-31: BlockState
 typedef uint32_t PackedBlock;
-
 
 inline PackedBlock packBlock(uint16_t blockID, uint16_t state) {
     return static_cast<uint32_t>(blockID) | (static_cast<uint32_t>(state) << 16);
@@ -56,11 +56,14 @@ namespace std {
     };
 }
 
+struct BlockEntity {
+    std::string entityType;
+    std::unordered_map<std::string, std::string> data;
+};
+
 struct Chunk {
     ChunkPos position;
-
     PackedBlock blocks[CHUNK_VOLUME];
-
     std::unordered_map<uint32_t, BlockEntity> blockEntities;
 
     inline uint32_t getIndex(uint8_t x, uint16_t y, uint8_t z) const {
@@ -101,6 +104,11 @@ struct Chunk {
         return it != blockEntities.end() ? &it->second : nullptr;
     }
 
+    inline const BlockEntity* getBlockEntity(uint8_t x, uint8_t y, uint8_t z) const {
+        auto it = blockEntities.find(getIndex(x, y, z));
+        return it != blockEntities.end() ? &it->second : nullptr;
+    }
+
     inline void setBlockEntity(uint8_t x, uint8_t y, uint8_t z, const BlockEntity& entity) {
         blockEntities[getIndex(x, y, z)] = entity;
     }
@@ -110,23 +118,46 @@ struct Chunk {
     }
 };
 
-struct BlockEntity {
-    std::string entityType;
-    std::unordered_map<std::string, std::string> data;
-};
-
 struct World {
-    std::unordered_map<ChunkPos, Chunk*> chunks;
+    std::unordered_map<ChunkPos, std::unique_ptr<Chunk>> chunks;
     std::string worldName;
-    int32_t seed;
 
     Chunk* getChunk(const ChunkPos& pos) const {
         auto it = chunks.find(pos);
-        return it != chunks.end() ? it->second : nullptr;
+        return it != chunks.end() ? it->second.get() : nullptr;
     }
 
     Chunk* getChunk(int32_t chunkX, int32_t chunkZ) const {
         return getChunk({ chunkX, chunkZ });
+    }
+
+    Chunk* createChunk(const ChunkPos& pos) {
+        auto chunk = std::make_unique<Chunk>();
+        chunk->position = pos;
+        auto* ptr = chunk.get();
+        chunks[pos] = std::move(chunk);
+        return ptr;
+    }
+
+    Chunk* createChunk(int32_t chunkX, int32_t chunkZ) {
+        return createChunk({ chunkX, chunkZ });
+    }
+
+    Chunk* getOrCreateChunk(const ChunkPos& pos) {
+        auto* existing = getChunk(pos);
+        return existing ? existing : createChunk(pos);
+    }
+
+    Chunk* getOrCreateChunk(int32_t chunkX, int32_t chunkZ) {
+        return getOrCreateChunk({ chunkX, chunkZ });
+    }
+
+    void removeChunk(const ChunkPos& pos) {
+        chunks.erase(pos);
+    }
+
+    void removeChunk(int32_t chunkX, int32_t chunkZ) {
+        removeChunk({ chunkX, chunkZ });
     }
 
     PackedBlock getPackedBlockAt(int32_t x, int32_t y, int32_t z) const {
@@ -161,11 +192,5 @@ struct World {
         uint8_t localZ = z & 31;
 
         chunk->setBlock(localX, y, localZ, blockID, state);
-    }
-
-    ~World() {
-        for (auto& pair : chunks) {
-            delete pair.second;
-        }
     }
 };

@@ -3,17 +3,6 @@
 #include <string>
 #include <cstdlib>
 
-struct ExportConfig {
-	std::string worldPath;
-	std::string assetsPath;
-	std::string outputPath;
-	std::string outputName;
-	int chunkMinX = 0;
-	int chunkMinY = 0;
-	int chunkMaxX = 0;
-	int chunkMaxY = 0;
-};
-
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options]\n"
         << "\nRequired:\n"
