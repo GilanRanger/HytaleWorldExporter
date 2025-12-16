@@ -7,7 +7,7 @@ void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options]\n"
         << "\nRequired:\n"
         << "  -w, --world <path>       Path to world file\n"
-        << "  -a, --assets <path>      Path to assets folder\n"
+        << "  -a, --assets <path>      Path to game assets folder\n"
         << "  -o, --output <path>      Output directory\n"
         << "  --chunk-min <x,y>        Min chunk coordinates\n"
         << "  --chunk-max <x,y>        Max chunk coordinates\n"

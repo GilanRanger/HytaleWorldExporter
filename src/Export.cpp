@@ -26,14 +26,11 @@ void Export::exportWorld()
 
     // Parse assets to create BlockModels
     ModelRegistry blockModelRegistry;
-    TextureRegistry textureRegistry;
+    TextureRegistry textureRegistry(2048,2048,32);
 
     // For each block type that appears in selected chunks:
-        // Load its model(s)
-        // Collect texture references
-
-    // Create texture atlas
-    textureRegistry.beginBuild(1024, 1024, 32);
+        // Load its model(s), add to model registry
+        // Collect texture references, add to texture registry
 
     // Generate geometry
     MeshBuilder meshBuilder(&blockModelRegistry, &blockIDMappings, &textureRegistry);

@@ -211,33 +211,41 @@ private:
 
 // UV bounds for a texture within an atlas
 struct AtlasRegion {
-	Vec2 uvMin;     // Top-left UV coordinate (0.0 - 1.0)
-	Vec2 uvMax;     // Bottom-right UV coordinate (0.0 - 1.0)
+	Vec2 uvMin;
+	Vec2 uvMax;
 	uint32_t pixelWidth;
 	uint32_t pixelHeight;
+};
+
+struct TextureSource {
+	std::string name;
+	uint8_t* data;
+	uint32_t width;
+	uint32_t height;
+	uint32_t channels;
 };
 
 class TextureRegistry {
 private:
 	std::unordered_map<std::string, AtlasRegion> textureRegions;
+	std::unordered_map<std::string, TextureSource> textureSources;
 	uint32_t atlasWidth, atlasHeight;
 	uint32_t standardTileSize;
 	std::vector<uint8_t> pixelData;
-	bool building;
-
+	
+	void copyTextureToAtlas(const uint8_t* srcData, uint32_t srcWidth, uint32_t srcHeight,
+		uint32_t srcChannels, uint32_t dstX, uint32_t dstY);
 public:
-	TextureRegistry() : atlasWidth(0), atlasHeight(0), standardTileSize(0), building(false) {}
+	TextureRegistry(uint32_t width, uint32_t height, uint32_t tileSize)
+		: atlasWidth(width), atlasHeight(height), standardTileSize(tileSize) {
+	}
 
-	void beginBuild(uint32_t width, uint32_t height, uint32_t tileSize);
 	void addTexture(const std::string& name, const std::string& filepath);
 	void packTextures();
 	void exportAtlas(const std::string& outputPath);
-	void endBuild();
-
 	bool getTextureUVs(const std::string& name, Vec2& uvMin, Vec2& uvMax) const;
 	void loadMetadata(const std::string& metadataPath);
 	void saveMetadata(const std::string& metadataPath) const;
-	bool isBuilding() const { return building; }
 };
 
 class ModelRegistry {
