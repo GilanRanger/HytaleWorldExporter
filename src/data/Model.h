@@ -243,9 +243,7 @@ public:
 	void addTexture(const std::string& name, const std::string& filepath);
 	void packTextures();
 	void exportAtlas(const std::string& outputPath);
-	bool getTextureUVs(const std::string& name, Vec2& uvMin, Vec2& uvMax) const;
-	void loadMetadata(const std::string& metadataPath);
-	void saveMetadata(const std::string& metadataPath) const;
+	const AtlasRegion* getTextureRegion(const std::string& name) const;
 };
 
 class ModelRegistry {
@@ -262,15 +260,4 @@ public:
 	bool hasModel(const std::string& modelName) const;
 
 	NodeNameManager* getNodeNameManager() { return &nodeNameManager; }
-};
-
-class BlockIDMappings {
-private:
-	std::unordered_map<PackedBlock, std::string> blockNames;
-
-public:
-	BlockIDMappings();
-
-	void parseBlockList(const std::string& data);
-	std::string getBlockName(PackedBlock blockId);
 };

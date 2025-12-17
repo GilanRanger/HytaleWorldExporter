@@ -38,7 +38,7 @@ void Export::exportWorld()
     std::vector<Mesh> chunkMeshes;
 
     for (const ChunkPos& chunkPos : selectedChunks) {
-        Chunk* chunk = world.getChunk(chunkPos);
+        ChunkColumn* chunk = world.getChunk(chunkPos);
         if (!chunk) continue;
 
         Mesh chunkMesh;

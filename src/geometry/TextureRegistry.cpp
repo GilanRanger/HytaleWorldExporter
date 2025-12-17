@@ -1,9 +1,10 @@
 #include "MeshBuilder.h"
+#include <iostream>
 #include <stdexcept>
 #include <algorithm>
 #include "../data/Model.h"
 #include "../output/stb/stb_image.h"
-
+#include "../output/stb/stb_image_write.h"
 
 
 void TextureRegistry::addTexture(const std::string& name, const std::string& filepath) {
@@ -23,9 +24,7 @@ void TextureRegistry::addTexture(const std::string& name, const std::string& fil
 	};
 }
 
-void TextureRegistry::packTextures() {
-	// pack into one texture, create atlas regions, set pixelData
-	
+void TextureRegistry::packTextures() {	
 	// Sort textures from largest to smallest
 	std::vector<TextureSource*> sortedSources;
 	sortedSources.reserve(textureSources.size());
@@ -120,17 +119,32 @@ void TextureRegistry::copyTextureToAtlas(const uint8_t* srcData, uint32_t srcWid
 }
 
 void TextureRegistry::exportAtlas(const std::string& outputPath) {
+	if (pixelData.empty()) {
+		std::cerr << "Error: Atlas has no pixel data. Call packTextures() first." << std::endl;
+		return;
+	}
 
+	int CHANNELS = 4; //RGBA
+	int stride = atlasWidth * CHANNELS;
+
+	int result = stbi_write_png(
+		outputPath.c_str(),
+		atlasWidth,
+		atlasHeight,
+		CHANNELS,
+		pixelData.data(),
+		stride
+	);
+
+	if (result) {
+		std::cout << "Atlas exported to: " << outputPath << std::endl;
+	}
+	else {
+		std::cerr << "Error: Failed to write PNG file: " << outputPath << std::endl;
+	}
 }
 
-bool TextureRegistry::getTextureUVs(const std::string& name, Vec2& uvMin, Vec2& uvMax) const {
-
-}
-
-void TextureRegistry::loadMetadata(const std::string& metadataPath) {
-
-}
-
-void TextureRegistry::saveMetadata(const std::string& metadataPath) const {
-
+const AtlasRegion* TextureRegistry::getTextureRegion(const std::string& name) const {
+	auto it = textureRegions.find(name);
+	return (it != textureRegions.end()) ? &it->second : nullptr;
 }

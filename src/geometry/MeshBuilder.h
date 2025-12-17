@@ -50,7 +50,7 @@ public:
     MeshBuilder(ModelRegistry* registry, BlockIDMappings* blockIDMappings,
         TextureRegistry* textureRegistry);
 
-    void generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh);
+    void generateChunkMesh(const World* world, const ChunkColumn* chunk, Mesh& outputMesh);
     void generateBlockMesh(const World* world, int32_t blockX, int32_t blockY, int32_t blockZ,
         Mesh& outputMesh);
 };

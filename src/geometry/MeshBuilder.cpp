@@ -300,7 +300,7 @@ Vec3 MeshBuilder::rotateNormal(const Vec3& normal, uint16_t state) const {
     return rotateVertex(normal, state);
 }
 
-void MeshBuilder::generateChunkMesh(const World* world, const Chunk* chunk, Mesh& outputMesh) {
+void MeshBuilder::generateChunkMesh(const World* world, const ChunkColumn* chunk, Mesh& outputMesh) {
     outputMesh.clear();
 
     for (uint8_t y = 0; y < CHUNK_SIZE_Y; ++y) {
