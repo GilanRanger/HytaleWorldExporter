@@ -14,9 +14,6 @@ void Export::exportWorld()
     std::vector<ChunkPos> selectedChunks;
 
     // Gamedata/Worlddata
-        // Block id mappings
-    BlockIDMappings blockIDMappings;
-    // Parse and populate blockIDMappings
 
     // For each selected chunk in data
         // Create an empty Chunk struct
@@ -33,7 +30,7 @@ void Export::exportWorld()
         // Collect texture references, add to texture registry
 
     // Generate geometry
-    MeshBuilder meshBuilder(&blockModelRegistry, &blockIDMappings, &textureRegistry);
+    MeshBuilder meshBuilder(&blockModelRegistry, &textureRegistry);
 
     std::vector<Mesh> chunkMeshes;
 

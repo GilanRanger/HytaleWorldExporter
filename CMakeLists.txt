@@ -1,4 +1,4 @@
-﻿# CMakeList.txt : CMake project for HytaleToOBJ, include source and define
+﻿# CMakeList.txt : CMake project for HytaleWorldExporter, include source and define
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.8)
@@ -9,13 +9,13 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("HytaleToOBJ")
+project ("HytaleWorldExporter")
 
 # Add source to this project's executable.
-add_executable (HytaleToOBJ "src/HytaleToOBJ.cpp"  "src/data/WorldData.h" "src/data/MeshData.h" "src/data/Model.h" "src/geometry/MeshBuilder.h" "src/geometry/MeshBuilder.cpp" "src/geometry/ModelRegistry.cpp" "src/output/OBJExporter.h" "src/output/OBJExporter.cpp" "src/output/stb/stb_impl.cpp" "src/Export.h" "src/Export.cpp" "src/geometry/TextureRegistry.cpp" "src/geometry/BlockIDMappings.cpp" "src/data/Vec.h")
+add_executable (HytaleWorldExporter "src/HytaleWorldExporter.cpp"  "src/data/WorldData.h" "src/data/MeshData.h" "src/data/Model.h" "src/geometry/MeshBuilder.h" "src/geometry/MeshBuilder.cpp" "src/geometry/ModelRegistry.cpp" "src/output/OBJExporter.h" "src/output/OBJExporter.cpp" "src/output/stb/stb_impl.cpp" "src/Export.h" "src/Export.cpp" "src/geometry/TextureRegistry.cpp" "src/geometry/BlockIDMappings.cpp" "src/data/Vec.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
-  set_property(TARGET HytaleToOBJ PROPERTY CXX_STANDARD 20)
+  set_property(TARGET HytaleWorldExporter PROPERTY CXX_STANDARD 20)
 endif()
 
 # TODO: Add tests and install targets if needed.

@@ -50,16 +50,6 @@ struct ChunkSection {
 	}
 };
 
-namespace std {
-    template<>
-    struct hash<ChunkPos> {
-        size_t operator()(const ChunkPos& pos) const {
-            // Combine x and z into a single 64-bit value for hashing
-            return (static_cast<size_t>(pos.x) << 32) | (static_cast<uint32_t>(pos.z));
-        }
-    };
-}
-
 struct BlockPos {
 	int32_t x, y, z;
 
@@ -76,6 +66,12 @@ struct ChunkPos {
 	}
 };
 
+struct ChunkPosHash {
+    size_t operator()(const ChunkPos& pos) const {
+        return (static_cast<size_t>(pos.x) << 32) | (static_cast<uint32_t>(pos.z));
+    }
+};
+
 struct ChunkColumn {
 	ChunkPos position;
 
@@ -86,7 +82,7 @@ struct ChunkColumn {
         return x + (z * SECTION_WIDTH) + (y * SECTION_WIDTH * SECTION_WIDTH);
     }
 
-	ResolvedBlock getBlockAt(uint8_t x, uint16_t y, uint8_t z) {
+    ResolvedBlock getBlockAt(uint8_t x, uint16_t y, uint8_t z) const {
 		int sectionIdx = y / SECTION_HEIGHT;
 		if (sectionIdx >= MAX_SECTIONS_PER_COLUMN || !sections[sectionIdx]) return 0;
 
@@ -118,7 +114,7 @@ struct ChunkColumn {
 };
 
 struct World {
-    std::unordered_map<ChunkPos, std::unique_ptr<ChunkColumn>> chunks;
+    std::unordered_map<ChunkPos, std::unique_ptr<ChunkColumn>, ChunkPosHash> chunks;
     std::string worldName;
 
     ChunkColumn* getChunk(const ChunkPos& pos) const {

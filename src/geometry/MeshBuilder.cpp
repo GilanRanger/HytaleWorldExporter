@@ -11,12 +11,11 @@ const FaceOffset MeshBuilder::FACE_OFFSETS[6] = {
     {0, -1, 0}   // MinusY - Down
 };
 
-MeshBuilder::MeshBuilder(ModelRegistry* registry, BlockIDMappings* blockIDMappings,
-    TextureRegistry* textureRegistry)
-    : modelRegistry(registry), blockIDMappings(blockIDMappings), textureRegistry(textureRegistry) {
+MeshBuilder::MeshBuilder(ModelRegistry* registry, TextureRegistry* textureRegistry)
+    : modelRegistry(registry), textureRegistry(textureRegistry) {
 }
 
-bool MeshBuilder::isBlockOpaque(PackedBlock blockId) const {
+bool MeshBuilder::isBlockOpaque(ResolvedBlock blockId) const {
     // TODO: Implement proper transparency checking based on block properties
     return blockId != 0;
 }
@@ -30,7 +29,7 @@ bool MeshBuilder::shouldRenderFace(const World* world, int32_t blockX, int32_t b
     int32_t neighborY = blockY + offset.y;
     int32_t neighborZ = blockZ + offset.z;
 
-    PackedBlock neighborBlock = world->getPackedBlockAt(neighborX, neighborY, neighborZ);
+    ResolvedBlock neighborBlock = world->getResolvedBlockAt(neighborX, neighborY, neighborZ);
     return !isBlockOpaque(neighborBlock);
 }
 
@@ -303,31 +302,29 @@ Vec3 MeshBuilder::rotateNormal(const Vec3& normal, uint16_t state) const {
 void MeshBuilder::generateChunkMesh(const World* world, const ChunkColumn* chunk, Mesh& outputMesh) {
     outputMesh.clear();
 
-    for (uint8_t y = 0; y < CHUNK_SIZE_Y; ++y) {
-        for (uint8_t z = 0; z < CHUNK_SIZE_Z; ++z) {
-            for (uint8_t x = 0; x < CHUNK_SIZE_X; ++x) {
-                PackedBlock blockId = chunk->getPackedBlock(x, y, z);
+    for (uint8_t y = 0; y < SECTION_HEIGHT * 10; ++y) {
+        for (uint8_t z = 0; z < SECTION_WIDTH; ++z) {
+            for (uint8_t x = 0; x < SECTION_WIDTH; ++x) {
+                ResolvedBlock blockId = chunk->getBlockAt(x, y, z);
 
                 if (blockId == 0) continue; // Skip air
 
-                int32_t worldX = chunk->position.x * CHUNK_SIZE_X + x;
+                int32_t worldX = chunk->position.x * SECTION_WIDTH + x;
                 int32_t worldY = y;
-                int32_t worldZ = chunk->position.z * CHUNK_SIZE_Z + z;
+                int32_t worldZ = chunk->position.z * SECTION_WIDTH + z;
 
                 // TODO: Map blockId to model name
-                std::string modelName = blockIDMappings->getBlockName(blockId);
-                Model* model = modelRegistry->getModel(modelName);
-                if (!model) continue;
+                // Model* model = modelRegistry->getModel(modelName);
+                // if (!model) continue;
 
-                // TODO: Get block state from world
-                uint16_t state = world->getBlockStateAt(worldX, worldY, worldZ);
+                // TODO: Get block state
 
                 // Generate all visible faces
                 for (int faceIdx = 0; faceIdx < 6; ++faceIdx) {
                     ModelNode::QuadNormal face = static_cast<ModelNode::QuadNormal>(faceIdx);
 
                     if (shouldRenderFace(world, worldX, worldY, worldZ, face)) {
-                        generateBlockFace(outputMesh, *model, face, worldX, worldY, worldZ, state);
+                        // generateBlockFace(outputMesh, *model, face, worldX, worldY, worldZ, state);
                     }
                 }
             }
@@ -340,22 +337,21 @@ void MeshBuilder::generateBlockMesh(const World* world,
 
     outputMesh.clear();
 
-    PackedBlock blockId = world->getPackedBlockAt(blockX, blockY, blockZ);
+    ResolvedBlock blockId = world->getResolvedBlockAt(blockX, blockY, blockZ);
     if (blockId == 0) return; // Air
 
     // TODO: Map blockId to model name
-    std::string modelName = blockIDMappings->getBlockName(blockId);
-    Model* model = modelRegistry->getModel(modelName);
-    if (!model) return;
+    // Model* model = modelRegistry->getModel(modelName);
+    // if (!model) return;
 
-    uint16_t state = world->getBlockStateAt(blockX, blockY, blockZ);
+    // TODO: Get block state
 
     // Generate all visible faces
     for (int faceIdx = 0; faceIdx < 6; ++faceIdx) {
         ModelNode::QuadNormal face = static_cast<ModelNode::QuadNormal>(faceIdx);
 
         if (shouldRenderFace(world, blockX, blockY, blockZ, face)) {
-            generateBlockFace(outputMesh, *model, face, blockX, blockY, blockZ, state);
+            // generateBlockFace(outputMesh, *model, face, blockX, blockY, blockZ, state);
         }
     }
 }

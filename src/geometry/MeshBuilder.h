@@ -12,7 +12,6 @@ struct FaceOffset {
 class MeshBuilder {
 private:
     ModelRegistry* modelRegistry;
-    BlockIDMappings* blockIDMappings;
     TextureRegistry* textureRegistry;
 
     static const FaceOffset FACE_OFFSETS[6];
@@ -21,7 +20,7 @@ private:
     bool shouldRenderFace(const World* world,
         int32_t blockX, int32_t blockY, int32_t blockZ,
         ModelNode::QuadNormal face) const;
-    bool isBlockOpaque(PackedBlock blockId) const;
+    bool isBlockOpaque(ResolvedBlock blockId) const;
 
     // Face generation
     void generateBlockFace(Mesh& outputMesh, const Model& model,
@@ -47,8 +46,7 @@ private:
     Vec3 rotateNormal(const Vec3& normal, uint16_t state) const;
 
 public:
-    MeshBuilder(ModelRegistry* registry, BlockIDMappings* blockIDMappings,
-        TextureRegistry* textureRegistry);
+    MeshBuilder(ModelRegistry* registry, TextureRegistry* textureRegistry);
 
     void generateChunkMesh(const World* world, const ChunkColumn* chunk, Mesh& outputMesh);
     void generateBlockMesh(const World* world, int32_t blockX, int32_t blockY, int32_t blockZ,

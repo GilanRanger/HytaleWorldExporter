@@ -96,8 +96,8 @@ void TextureRegistry::packTextures() {
 	}
 
 	// Clean up sources
-	for (auto& [name, source] : textureSources) {
-		stbi_image_free(source.data);
+	for (auto it = textureSources.begin(); it != textureSources.end(); ++it) {
+		stbi_image_free(it->second.data);
 	}
 	textureSources.clear();
 }
