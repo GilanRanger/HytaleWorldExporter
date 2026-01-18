@@ -1,0 +1,480 @@
+{
+  "version": 8,
+  "blockIdVersion": 10,
+  "anchorX": 0,
+  "anchorY": 0,
+  "anchorZ": 0,
+  "blocks": [
+    {
+      "x": -1,
+      "y": 0,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": -1,
+      "y": 3,
+      "z": -1,
+      "name": "Rock_Crystal_Blue_Large"
+    },
+    {
+      "x": -1,
+      "y": 0,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": -1,
+      "y": 0,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 0,
+      "name": "Empty"
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 0,
+      "name": "Plant_Flower_Water_Green"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": -1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": -1,
+      "name": "Bench_Cooking",
+      "filler": 992,
+      "rotation": 3
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": -1,
+      "name": "Bench_Cooking",
+      "filler": 2016,
+      "rotation": 3
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 0,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 0,
+      "name": "Bench_Cooking",
+      "components": {
+        "Components": {
+          "PlacedByInteraction": {
+            "WhoPlacedUuid": {
+              "$binary": "7HU1Iro9SOCNn/NybgYfpQ==",
+              "$type": "04"
+            }
+          },
+          "crafting": {
+            "Position": {
+              "X": 13,
+              "Y": 136,
+              "Z": 4
+            },
+            "TierLevel": 1,
+            "UpgradeItems": []
+          }
+        }
+      },
+      "rotation": 3
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": 0,
+      "name": "Bench_Cooking",
+      "filler": 1024,
+      "rotation": 3
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Orange"
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Pink"
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 1,
+      "name": "Cloth_Block_Wool_Red"
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 1,
+      "name": "Deco_Map",
+      "rotation": 1
+    }
+  ],
+  "fluids": [
+    {
+      "x": -1,
+      "y": 0,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 3,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 0,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 0,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 1,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": -1,
+      "y": 2,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 0,
+      "name": "Water_Source",
+      "level": 1
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": -1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "z": 0,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "z": 1,
+      "name": "Empty",
+      "level": 0
+    }
+  ]
+}

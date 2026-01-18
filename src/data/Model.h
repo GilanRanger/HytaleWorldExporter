@@ -1,6 +1,5 @@
 #pragma once
 #include "MeshData.h"
-#include "WorldData.h"
 #include <string>
 #include <vector>
 #include <array>
@@ -231,13 +230,15 @@ private:
 	std::unordered_map<std::string, TextureSource> textureSources;
 	uint32_t atlasWidth, atlasHeight;
 	uint32_t standardTileSize;
-	std::vector<uint8_t> pixelData;
+	std::unique_ptr<uint8_t[]> pixelData;
 	
 	void copyTextureToAtlas(const uint8_t* srcData, uint32_t srcWidth, uint32_t srcHeight,
 		uint32_t srcChannels, uint32_t dstX, uint32_t dstY);
 public:
 	TextureRegistry(uint32_t width, uint32_t height, uint32_t tileSize)
-		: atlasWidth(width), atlasHeight(height), standardTileSize(tileSize) {
+		: atlasWidth(width), atlasHeight(height), standardTileSize(tileSize),
+		pixelData(std::make_unique<uint8_t[]>(width* height * 4)) {
+		std::memset(pixelData.get(), 0, width * height * 4);
 	}
 
 	void addTexture(const std::string& name, const std::string& filepath);
