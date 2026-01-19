@@ -1,6 +1,7 @@
 #pragma once
 #include "MeshData.h"
 #include <string>
+#include <memory>
 #include <vector>
 #include <array>
 #include <unordered_map>
@@ -249,12 +250,15 @@ public:
 
 class ModelRegistry {
 private:
+	std::string assetPath;
 	std::unordered_map<std::string, Model*> models;
 	NodeNameManager nodeNameManager;
 
 public:
-	ModelRegistry();
-	~ModelRegistry();
+	ModelRegistry(const std::string& assetPath) : assetPath(assetPath) {}
+
+	std::string findModelPath(const std::string& modelName);
+	std::string findTexturePath(const std::string& modelName);
 
 	Model* loadModel(const std::string& modelName);
 	Model* getModel(const std::string& modelName);

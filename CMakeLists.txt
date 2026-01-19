@@ -12,7 +12,7 @@ endif()
 project ("HytaleWorldExporter")
 
 # Add source to this project's executable.
-add_executable (HytaleWorldExporter "src/HytaleWorldExporter.cpp"   "src/data/MeshData.h" "src/data/Model.h"   "src/geometry/ModelRegistry.cpp" "src/output/OBJExporter.h" "src/output/OBJExporter.cpp" "src/output/stb/stb_impl.cpp" "src/Export.h" "src/Export.cpp" "src/geometry/TextureRegistry.cpp"  "src/data/Vec.h"  "src/parse/HytalePrefabParser.h" "src/data/Prefab.h" "src/geometry/PrefabMesher.h" "src/parse/HytalePrefabParser.cpp" "src/geometry/PrefabMesher.cpp")
+add_executable (HytaleWorldExporter "src/HytaleWorldExporter.cpp"   "src/data/MeshData.h" "src/data/Model.h"   "src/geometry/ModelRegistry.cpp" "src/output/OBJExporter.h" "src/output/OBJExporter.cpp" "src/output/stb/stb_impl.cpp" "src/Export.h" "src/Export.cpp" "src/geometry/TextureRegistry.cpp"  "src/data/Vec.h"  "src/parse/HytalePrefabParser.h" "src/data/Prefab.h" "src/geometry/PrefabMesher.h" "src/parse/HytalePrefabParser.cpp" "src/geometry/PrefabMesher.cpp" "src/parse/ModelParser.cpp" "src/parse/ModelParser.h" "src/data/Model.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET HytaleWorldExporter PROPERTY CXX_STANDARD 20)

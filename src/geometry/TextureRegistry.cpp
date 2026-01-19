@@ -1,4 +1,3 @@
-#include "MeshBuilder.h"
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
@@ -119,7 +118,7 @@ void TextureRegistry::copyTextureToAtlas(const uint8_t* srcData, uint32_t srcWid
 }
 
 void TextureRegistry::exportAtlas(const std::string& outputPath) {
-	if (pixelData.empty()) {
+	if (!pixelData) {
 		std::cerr << "Error: Atlas has no pixel data. Call packTextures() first." << std::endl;
 		return;
 	}
@@ -132,7 +131,7 @@ void TextureRegistry::exportAtlas(const std::string& outputPath) {
 		atlasWidth,
 		atlasHeight,
 		CHANNELS,
-		pixelData.data(),
+		pixelData.get(),
 		stride
 	);
 

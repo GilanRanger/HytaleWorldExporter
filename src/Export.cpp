@@ -1,50 +1,62 @@
 #include "Export.h"
 #include "data/Model.h"
-#include "geometry/MeshBuilder.h"
+#include "geometry/PrefabMesher.h"
+#include "parse/HytalePrefabParser.h"
 #include "output/OBJExporter.h"
 #include <iostream>
 
 Export::Export(ExportConfig* config) : config(config) {}
 
-void Export::exportWorld()
+void Export::exportPrefab()
 {
-    // Get world file
-    // Parse world file
-    World world;
-    std::vector<ChunkPos> selectedChunks;
+    ModelRegistry blockModelRegistry(config->assetsPath);
+    TextureRegistry textureRegistry(2048, 2048, 32);
 
-    // Gamedata/Worlddata
-
-    // For each selected chunk in data
-        // Create an empty Chunk struct
-        // Fill with PackedBlocks (blockID + state)
-        // Fill with block entities
-        // Store in world.chunks
-
-    // Parse assets to create BlockModels
-    ModelRegistry blockModelRegistry;
-    TextureRegistry textureRegistry(2048,2048,32);
-
-    // For each block type that appears in selected chunks:
-        // Load its model(s), add to model registry
-        // Collect texture references, add to texture registry
-
-    // Generate geometry
-    MeshBuilder meshBuilder(&blockModelRegistry, &textureRegistry);
-
-    std::vector<Mesh> chunkMeshes;
-
-    for (const ChunkPos& chunkPos : selectedChunks) {
-        ChunkColumn* chunk = world.getChunk(chunkPos);
-        if (!chunk) continue;
-
-        Mesh chunkMesh;
-        meshBuilder.generateChunkMesh(&world, chunk, chunkMesh);
-
-        chunkMeshes.push_back(chunkMesh);
+    auto prefab = PrefabLoader::loadFromFile(config->prefabPath);
+    if (!prefab) {
+        std::cerr << "Failed to load prefab: " << config->prefabPath << "\n";
+        return;
     }
 
-    // Export OBJ file, MTL file, and atlas PNG
+    // Get unique block types in prefab
+    std::unordered_set<std::string> uniqueBlockTypes = prefab->getUniqueBlockTypes();
+
+    std::cout << "Loading " << uniqueBlockTypes.size() << " unique block types...\n";
+
+    // For each unique block type: load model and texture
+    for (const std::string& blockName : uniqueBlockTypes) {
+        std::cout << "  Loading: " << blockName << "\n";
+
+        // Load model
+        Model* model = blockModelRegistry.loadModel(blockName);
+        if (!model) {
+            std::cerr << "    Warning: Could not load model for " << blockName << "\n";
+        }
+
+        // Load texture
+        std::string texturePath = blockModelRegistry.findTexturePath(blockName);
+        if (!texturePath.empty()) {
+            textureRegistry.addTexture(blockName, texturePath);
+        }
+        else {
+            std::cerr << "    Warning: Could not find texture for " << blockName << "\n";
+        }
+    }
+
+    // Pack textures into atlas
+    std::cout << "Packing textures into atlas...\n";
+    textureRegistry.packTextures();
+
+    // Generate mesh
+    std::cout << "Generating mesh...\n";
+    PrefabMesher prefabMesher(&blockModelRegistry, &textureRegistry);
+    Mesh prefabMesh;
+    prefabMesher.generatePrefabMesh(*prefab, prefabMesh);
+
+    std::vector<Mesh> meshes = { prefabMesh };
+
+    // Export
+    std::cout << "Exporting...\n";
     std::string outputFilename = config->outputName + ".obj";
     OBJExporter::OBJExportOptions options;
     options.outputDirectory = config->outputPath;
@@ -53,7 +65,7 @@ void Export::exportWorld()
     options.flipVCoordinate = true;
 
     OBJExporter exporter;
-    bool success = exporter.exportMeshes(chunkMeshes, outputFilename, config->assetsPath, &textureRegistry, options);
+    bool success = exporter.exportMeshes(meshes, outputFilename, config->assetsPath, &textureRegistry, options);
 
     if (success) {
         std::cout << "Export complete!\n";
