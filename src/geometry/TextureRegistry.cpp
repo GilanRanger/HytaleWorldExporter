@@ -19,7 +19,7 @@ void TextureRegistry::addTexture(const std::string& name, const std::string& fil
 		.data = imageData,
 		.width = static_cast<unsigned int>(width),
 		.height = static_cast<unsigned int>(height),
-		.channels = static_cast<unsigned int>(channels)
+		.channels = 4
 	};
 }
 
@@ -60,8 +60,14 @@ void TextureRegistry::packTextures() {
 					source->channels, shelf.currentX, shelf.y);
 
 				textureRegions[source->name] = {
-					.uvMin = Vec2(shelf.currentX, shelf.y),
-					.uvMax = Vec2(shelf.currentX + source->width, shelf.y + source->height),
+					.uvMin = Vec2(
+						static_cast<float>(shelf.currentX) / atlasWidth,
+						static_cast<float>(shelf.y) / atlasHeight
+					),
+					.uvMax = Vec2(
+						static_cast<float>(shelf.currentX + source->width) / atlasWidth,
+						static_cast<float>(shelf.y + source->height) / atlasHeight
+					),
 					.pixelWidth = source->width,
 					.pixelHeight = source->height,
 				};
@@ -83,10 +89,16 @@ void TextureRegistry::packTextures() {
 				source->channels, 0, newShelf.y);
 
 			textureRegions[source->name] = {
-					.uvMin = Vec2(newShelf.currentX, newShelf.y),
-					.uvMax = Vec2(newShelf.currentX + source->width, newShelf.y + source->height),
-					.pixelWidth = source->width,
-					.pixelHeight = source->height,
+				.uvMin = Vec2(
+					0.0f,
+					static_cast<float>(newShelf.y) / atlasHeight
+				),
+				.uvMax = Vec2(
+					static_cast<float>(source->width) / atlasWidth,
+					static_cast<float>(newShelf.y + source->height) / atlasHeight
+				),
+				.pixelWidth = source->width,
+				.pixelHeight = source->height,
 			};
 
 			shelves.push_back(newShelf);
@@ -117,7 +129,7 @@ void TextureRegistry::copyTextureToAtlas(const uint8_t* srcData, uint32_t srcWid
 	}
 }
 
-void TextureRegistry::exportAtlas(const std::string& outputPath) {
+void TextureRegistry::exportAtlas(const std::string& outputPath) const {
 	if (!pixelData) {
 		std::cerr << "Error: Atlas has no pixel data. Call packTextures() first." << std::endl;
 		return;
@@ -135,10 +147,7 @@ void TextureRegistry::exportAtlas(const std::string& outputPath) {
 		stride
 	);
 
-	if (result) {
-		std::cout << "Atlas exported to: " << outputPath << std::endl;
-	}
-	else {
+	if (!result) {
 		std::cerr << "Error: Failed to write PNG file: " << outputPath << std::endl;
 	}
 }

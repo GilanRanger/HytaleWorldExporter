@@ -24,7 +24,8 @@ struct ModelFaceTextureLayout {
 	bool hidden;
 
 	ModelFaceTextureLayout()
-		: offset(0, 0), angle(0), mirrorX(false), mirrorY(false), hidden(false) {}
+		: offset(0, 0), angle(0), mirrorX(false), mirrorY(false), hidden(false) {
+	}
 };
 
 struct ModelNode {
@@ -61,9 +62,9 @@ struct ModelNode {
 	QuadNormal quadNormalDirection;
 
 	// Texture
-	ModelFaceTextureLayout* textureLayout;
-	int textureLayoutSize;
-	uint8_t atlasIndex;
+	std::vector<ModelFaceTextureLayout> textureLayout;
+	Vec2 uvMin;
+	Vec2 uvMax;
 	uint8_t gradientId;
 	ShadingMode shadingMode;
 
@@ -79,13 +80,8 @@ struct ModelNode {
 		proceduralOffset(0, 0, 0), proceduralRotation(0, 0, 0),
 		type(ShapeType::None), size(0, 0, 0),
 		quadNormalDirection(QuadNormal::PlusZ),
-		textureLayout(nullptr), textureLayoutSize(0),
-		atlasIndex(0), gradientId(0), shadingMode(ShadingMode::Standard),
+		uvMin(0, 0), uvMax(0, 0), gradientId(0), shadingMode(ShadingMode::Standard),
 		visible(true), doubleSided(false), isPiece(false) {
-	}
-
-	~ModelNode() {
-		delete[] textureLayout;
 	}
 
 	ModelNode clone() const;
@@ -116,10 +112,10 @@ public:
 	Model clone() const;
 
 	void attach(Model* attachment, NodeNameManager* nodeNameManager,
-		uint8_t* atlasIndex = nullptr, Vec2* uvOffset = nullptr,
+		Vec2 uvMin, Vec2 uvMax, Vec2* uvOffset = nullptr,
 		int forcedTargetNodeNameId = -1);
 
-	void setAtlasIndex(uint8_t atlasIndex);
+	void setUV(Vec2 min, Vec2 max);
 	void setGradientId(uint8_t gradientId);
 	void offsetUVs(Vec2 offset);
 
@@ -127,7 +123,7 @@ private:
 	void ensureNodeCountAllocated(int required, int growth = 0);
 	void recurseAttach(Model* attachment, ModelNode& attachmentNode,
 		int parentNodeIndex, NodeNameManager* nodeNameManager,
-		uint8_t* atlasIndex, Vec2* uvOffset, bool forcedAttachment);
+		Vec2 uvMin, Vec2 uvMax, Vec2* uvOffset, bool forcedAttachment);
 };
 
 struct FaceLayout {
@@ -244,7 +240,9 @@ public:
 
 	void addTexture(const std::string& name, const std::string& filepath);
 	void packTextures();
-	void exportAtlas(const std::string& outputPath);
+	void exportAtlas(const std::string& outputPath) const;
+	uint32_t getAtlasWidth() const { return atlasWidth; }
+	uint32_t getAtlasHeight() const { return atlasHeight; }
 	const AtlasRegion* getTextureRegion(const std::string& name) const;
 };
 
@@ -253,9 +251,10 @@ private:
 	std::string assetPath;
 	std::unordered_map<std::string, Model*> models;
 	NodeNameManager nodeNameManager;
+	TextureRegistry* textureRegistry;
 
 public:
-	ModelRegistry(const std::string& assetPath) : assetPath(assetPath) {}
+	ModelRegistry(const std::string& assetPath, TextureRegistry* textureRegistry) : assetPath(assetPath), textureRegistry(textureRegistry) {}
 
 	std::string findModelPath(const std::string& modelName);
 	std::string findTexturePath(const std::string& modelName);

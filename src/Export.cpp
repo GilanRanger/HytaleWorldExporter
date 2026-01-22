@@ -9,8 +9,8 @@ Export::Export(ExportConfig* config) : config(config) {}
 
 void Export::exportPrefab()
 {
-    ModelRegistry blockModelRegistry(config->assetsPath);
-    TextureRegistry textureRegistry(2048, 2048, 32);
+    TextureRegistry textureRegistry(512, 512, 32);
+    ModelRegistry blockModelRegistry(config->assetsPath, &textureRegistry);
 
     auto prefab = PrefabLoader::loadFromFile(config->prefabPath);
     if (!prefab) {
@@ -18,28 +18,15 @@ void Export::exportPrefab()
         return;
     }
 
-    // Get unique block types in prefab
     std::unordered_set<std::string> uniqueBlockTypes = prefab->getUniqueBlockTypes();
-
     std::cout << "Loading " << uniqueBlockTypes.size() << " unique block types...\n";
 
-    // For each unique block type: load model and texture
+    // Load all textures
+    std::cout << "Loading textures...\n";
     for (const std::string& blockName : uniqueBlockTypes) {
-        std::cout << "  Loading: " << blockName << "\n";
-
-        // Load model
-        Model* model = blockModelRegistry.loadModel(blockName);
-        if (!model) {
-            std::cerr << "    Warning: Could not load model for " << blockName << "\n";
-        }
-
-        // Load texture
         std::string texturePath = blockModelRegistry.findTexturePath(blockName);
-        if (!texturePath.empty()) {
-            textureRegistry.addTexture(blockName, texturePath);
-        }
-        else {
-            std::cerr << "    Warning: Could not find texture for " << blockName << "\n";
+        if (!texturePath.empty() && texturePath != "EMPTY") {
+            textureRegistry.addTexture(texturePath, texturePath);
         }
     }
 
@@ -47,11 +34,24 @@ void Export::exportPrefab()
     std::cout << "Packing textures into atlas...\n";
     textureRegistry.packTextures();
 
+    // Load models
+    std::cout << "Loading models...\n";
+    for (const std::string& blockName : uniqueBlockTypes) {
+        std::cout << "  Loading: " << blockName << "\n";
+        Model* model = blockModelRegistry.loadModel(blockName);
+        if (!model) {
+            std::cerr << "    Warning: Could not load model for " << blockName << "\n";
+        }
+    }
+
     // Generate mesh
     std::cout << "Generating mesh...\n";
     PrefabMesher prefabMesher(&blockModelRegistry, &textureRegistry);
     Mesh prefabMesh;
     prefabMesher.generatePrefabMesh(*prefab, prefabMesh);
+
+    std::cout << "Mesh generated with " << prefabMesh.vertices.size()
+        << " vertices and " << prefabMesh.faces.size() << " faces\n";
 
     std::vector<Mesh> meshes = { prefabMesh };
 
@@ -69,10 +69,10 @@ void Export::exportPrefab()
 
     if (success) {
         std::cout << "Export complete!\n";
-        std::cout << "  OBJ: " << config->outputPath << "/" << outputFilename << "\n";
-        std::cout << "  MTL: " << config->outputPath << "/" << config->outputName << ".mtl\n";
+        std::cout << "  OBJ: " << config->outputPath << "\\" << outputFilename << "\n";
+        std::cout << "  MTL: " << config->outputPath << "\\" << config->outputName << ".mtl\n";
         if (options.exportTextures) {
-            std::cout << "  Texture: " << config->outputPath << "/"
+            std::cout << "  Texture: " << config->outputPath << "\\"
                 << config->outputName << "_atlas.png\n";
         }
     }

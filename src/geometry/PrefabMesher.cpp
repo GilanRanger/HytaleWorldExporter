@@ -1,43 +1,10 @@
 #include "PrefabMesher.h"
+#include <iostream>
 #include <cmath>
 #include <utility>
 
-const PrefabMesher::FaceOffset PrefabMesher::FACE_OFFSETS[6] = {
-    {0, 0, -1},  // MinusZ - North
-    {0, 0, 1},   // PlusZ - South
-    {1, 0, 0},   // PlusX - East
-    {-1, 0, 0},  // MinusX - West
-    {0, 1, 0},   // PlusY - Up
-    {0, -1, 0}   // MinusY - Down
-};
-
 PrefabMesher::PrefabMesher(ModelRegistry* registry, TextureRegistry* textureRegistry)
     : modelRegistry(registry), textureRegistry(textureRegistry) {
-}
-
-bool PrefabMesher::isBlockOpaque(const std::string& blockName) const {
-    return blockName != "Empty" && !blockName.empty();
-}
-
-bool PrefabMesher::hasBlockAt(const Prefab& prefab, int32_t x, int32_t y, int32_t z) const {
-    for (const auto& block : prefab.blocks) {
-        if (block.x == x && block.y == y && block.z == z) {
-            return isBlockOpaque(block.name);
-        }
-    }
-    return false;
-}
-
-bool PrefabMesher::shouldRenderFace(const Prefab& prefab, int32_t blockX, int32_t blockY, int32_t blockZ,
-    ModelNode::QuadNormal face) const {
-
-    const FaceOffset& offset = FACE_OFFSETS[static_cast<int>(face)];
-
-    int32_t neighborX = blockX + offset.x;
-    int32_t neighborY = blockY + offset.y;
-    int32_t neighborZ = blockZ + offset.z;
-
-    return !hasBlockAt(prefab, neighborX, neighborY, neighborZ);
 }
 
 void PrefabMesher::generatePrefabMesh(const Prefab& prefab, Mesh& outputMesh) {
@@ -46,61 +13,74 @@ void PrefabMesher::generatePrefabMesh(const Prefab& prefab, Mesh& outputMesh) {
     for (const auto& block : prefab.blocks) {
         if (block.name == "Empty" || block.name.empty()) continue;
 
-        generateBlockMesh(prefab, block, block.x, block.y, block.z, outputMesh);
+        Model* model = modelRegistry->getModel(block.name);
+
+        std::cout << block.name << " ->     " 
+            << "(" << model->allNodes[0].uvMin.u << ", " << model->allNodes[0].uvMin.v << ") "
+            << "(" << model->allNodes[0].uvMax.u << ", " << model->allNodes[0].uvMax.v << ") "
+            << "\n";
+
+        if (!model || model->nodeCount == 0) continue;
+
+        // Generate mesh for all nodes in the model
+        for (int i = 0; i < model->nodeCount; ++i) {
+            const ModelNode& node = model->allNodes[i];
+
+            if (!node.visible) continue;
+
+            if (node.type == ModelNode::ShapeType::Box) {
+                generateBoxNode(outputMesh, *model, node, block.x, block.y, block.z, block.rotation);
+            }
+            else if (node.type == ModelNode::ShapeType::Quad) {
+                generateQuadNode(outputMesh, *model, node, block.x, block.y, block.z, block.rotation);
+            }
+        }
     }
 }
 
-void PrefabMesher::generateBlockMesh(const Prefab& prefab, const PrefabBlock& block,
-    int32_t worldX, int32_t worldY, int32_t worldZ, Mesh& outputMesh) {
-
-    Model* model = modelRegistry->getModel(block.name);
-    if (!model) return;
+void PrefabMesher::generateBoxNode(Mesh& outputMesh, const Model& model,
+    const ModelNode& node, int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t rotation) {
+    Mat4 transform = calculateNodeTransform(model, node);
+    Vec3 halfSize = node.size * (1.0f / 32.0f) * 0.5f;
 
     for (int faceIdx = 0; faceIdx < 6; ++faceIdx) {
-        ModelNode::QuadNormal face = static_cast<ModelNode::QuadNormal>(faceIdx);
+        if (faceIdx >= node.textureLayout.size()) continue;
 
-        if (shouldRenderFace(prefab, worldX, worldY, worldZ, face)) {
-            generateBlockFace(outputMesh, *model, face, worldX, worldY, worldZ, block.rotation);
+        const ModelFaceTextureLayout& faceLayout = node.textureLayout[faceIdx];
+        if (faceLayout.hidden) continue;
+
+        generateBoxFace(outputMesh, model, node, static_cast<ModelNode::QuadNormal>(faceIdx),
+            transform, halfSize, worldX, worldY, worldZ, rotation);
+    }
+}
+
+void PrefabMesher::generateQuadNode(Mesh& outputMesh, const Model& model,
+    const ModelNode& node, int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t rotation) {
+    Mat4 transform = calculateNodeTransform(model, node);
+    Vec2 halfSize(node.size.x * (1.0f / 32.0f) * 0.5f, node.size.y * (1.0f / 32.0f) * 0.5f);
+    if (!node.textureLayout.empty()) {
+        const ModelFaceTextureLayout& faceLayout = node.textureLayout[0];
+        if (!faceLayout.hidden) {
+            generateQuadFace(outputMesh, model, node, node.quadNormalDirection,
+                transform, halfSize, worldX, worldY, worldZ, rotation);
         }
     }
 }
 
-void PrefabMesher::generateBlockFace(Mesh& outputMesh, const Model& model,
-    ModelNode::QuadNormal face, int32_t worldX, int32_t worldY, int32_t worldZ,
-    uint16_t rotation) {
-
-    if (model.rootNodes.empty()) return;
-
-    for (int i = 0; i < model.nodeCount; ++i) {
-        const ModelNode& node = model.allNodes[i];
-
-        if (!node.visible || node.type != ModelNode::ShapeType::Box) {
-            continue;
-        }
-
-        generateNodeFace(outputMesh, model, node, face, worldX, worldY, worldZ, rotation);
-    }
-}
-
-void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
-    const ModelNode& node, ModelNode::QuadNormal face,
-    int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t rotation) {
-
-    if (node.type != ModelNode::ShapeType::Box) return;
+void PrefabMesher::generateBoxFace(Mesh& outputMesh, const Model& model,
+    const ModelNode& node, ModelNode::QuadNormal face, const Mat4& transform,
+    const Vec3& halfSize, int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t rotation) {
 
     int faceIndex = static_cast<int>(face);
-    if (faceIndex < 0 || faceIndex >= node.textureLayoutSize) return;
+    if (faceIndex >= node.textureLayout.size()) return;
 
     const ModelFaceTextureLayout& faceLayout = node.textureLayout[faceIndex];
     if (faceLayout.hidden) return;
 
-    Mat4 transform = calculateNodeTransform(model, node);
-
-    Vec3 halfSize = node.size * (1.0f / 32.0f) * 0.5f;
     Vec3 center = node.offset * (1.0f / 32.0f);
-
     Vertex v0, v1, v2, v3;
 
+    // Define quad vertices based on face direction
     switch (face) {
     case ModelNode::QuadNormal::MinusZ:
         v0.position = center + Vec3(-halfSize.x, -halfSize.y, -halfSize.z);
@@ -151,6 +131,7 @@ void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
         break;
     }
 
+    // Apply node transform
     v0.position = transformPoint(transform, v0.position);
     v1.position = transformPoint(transform, v1.position);
     v2.position = transformPoint(transform, v2.position);
@@ -162,8 +143,10 @@ void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
     v2.normal = transformNormal(normalTransform, v2.normal);
     v3.normal = transformNormal(normalTransform, v3.normal);
 
+    // Apply UVs
     Vec2 uvMin, uvMax;
-    if (getAtlasUVs(node.atlasIndex, faceLayout.offset, node.size, uvMin, uvMax)) {
+    if (getAtlasUVs(node, faceLayout.offset, node.size, uvMin, uvMax)) {
+
         v0.uv = Vec2(uvMin.u, uvMax.v);
         v1.uv = Vec2(uvMax.u, uvMax.v);
         v2.uv = Vec2(uvMax.u, uvMin.v);
@@ -183,6 +166,7 @@ void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
         }
     }
 
+    // Apply block rotation
     v0.position = rotateVertex(v0.position, rotation);
     v1.position = rotateVertex(v1.position, rotation);
     v2.position = rotateVertex(v2.position, rotation);
@@ -193,11 +177,13 @@ void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
     v2.normal = rotateNormal(v2.normal, rotation);
     v3.normal = rotateNormal(v3.normal, rotation);
 
-    v0.position += Vec3(static_cast<float>(worldX), static_cast<float>(worldY), static_cast<float>(worldZ));
-    v1.position += Vec3(static_cast<float>(worldX), static_cast<float>(worldY), static_cast<float>(worldZ));
-    v2.position += Vec3(static_cast<float>(worldX), static_cast<float>(worldY), static_cast<float>(worldZ));
-    v3.position += Vec3(static_cast<float>(worldX), static_cast<float>(worldY), static_cast<float>(worldZ));
+    // Apply world position
+    v0.position += Vec3(worldX, worldY, worldZ);
+    v1.position += Vec3(worldX, worldY, worldZ);
+    v2.position += Vec3(worldX, worldY, worldZ);
+    v3.position += Vec3(worldX, worldY, worldZ);
 
+    // Add to mesh
     uint32_t idx0 = outputMesh.addVertex(v0);
     uint32_t idx1 = outputMesh.addVertex(v1);
     uint32_t idx2 = outputMesh.addVertex(v2);
@@ -209,8 +195,119 @@ void PrefabMesher::generateNodeFace(Mesh& outputMesh, const Model& model,
     quadFace.indices[2] = idx2;
     quadFace.indices[3] = idx3;
     quadFace.vertexCount = 4;
-    quadFace.material = std::to_string(node.atlasIndex);
+    // TODO: Replace this with not just a random material assignment
+    quadFace.material = std::to_string(node.uvMax.u);
     outputMesh.addFace(quadFace);
+}
+
+void PrefabMesher::generateQuadFace(Mesh& outputMesh, const Model& model,
+    const ModelNode& node, ModelNode::QuadNormal normalDir, const Mat4& transform,
+    const Vec2& halfSize, int32_t worldX, int32_t worldY, int32_t worldZ, uint16_t rotation) {
+
+    if (node.textureLayout.empty()) return;
+
+    const ModelFaceTextureLayout& faceLayout = node.textureLayout[0];
+    if (faceLayout.hidden) return;
+
+    Vertex v0, v1, v2, v3;
+
+    // Quad is in XY plane by default, facing +Z
+    v0.position = Vec3(-halfSize.u, -halfSize.v, 0);
+    v1.position = Vec3(halfSize.u, -halfSize.v, 0);
+    v2.position = Vec3(halfSize.u, halfSize.v, 0);
+    v3.position = Vec3(-halfSize.u, halfSize.v, 0);
+
+    // Normal depends on quad direction
+    Vec3 normal;
+    switch (normalDir) {
+    case ModelNode::QuadNormal::PlusZ:  normal = Vec3(0, 0, 1); break;
+    case ModelNode::QuadNormal::MinusZ: normal = Vec3(0, 0, -1); break;
+    case ModelNode::QuadNormal::PlusX:  normal = Vec3(1, 0, 0); break;
+    case ModelNode::QuadNormal::MinusX: normal = Vec3(-1, 0, 0); break;
+    case ModelNode::QuadNormal::PlusY:  normal = Vec3(0, 1, 0); break;
+    case ModelNode::QuadNormal::MinusY: normal = Vec3(0, -1, 0); break;
+    }
+
+    v0.normal = v1.normal = v2.normal = v3.normal = normal;
+
+    // Apply node transform
+    v0.position = transformPoint(transform, v0.position);
+    v1.position = transformPoint(transform, v1.position);
+    v2.position = transformPoint(transform, v2.position);
+    v3.position = transformPoint(transform, v3.position);
+
+    Mat4 normalTransform = extractRotation(transform);
+    v0.normal = transformNormal(normalTransform, v0.normal);
+    v1.normal = transformNormal(normalTransform, v1.normal);
+    v2.normal = transformNormal(normalTransform, v2.normal);
+    v3.normal = transformNormal(normalTransform, v3.normal);
+
+    // Apply UVs
+    Vec2 uvMin, uvMax;
+    Vec3 quadSize(node.size.x, node.size.y, 0);
+    if (getAtlasUVs(node, faceLayout.offset, quadSize, uvMin, uvMax)) {
+        v0.uv = Vec2(uvMin.u, uvMax.v);
+        v1.uv = Vec2(uvMax.u, uvMax.v);
+        v2.uv = Vec2(uvMax.u, uvMin.v);
+        v3.uv = Vec2(uvMin.u, uvMin.v);
+
+        if (faceLayout.angle != 0) {
+            rotateUVs(v0.uv, v1.uv, v2.uv, v3.uv, faceLayout.angle);
+        }
+
+        if (faceLayout.mirrorX) {
+            std::swap(v0.uv.u, v1.uv.u);
+            std::swap(v2.uv.u, v3.uv.u);
+        }
+        if (faceLayout.mirrorY) {
+            std::swap(v0.uv.v, v3.uv.v);
+            std::swap(v1.uv.v, v2.uv.v);
+        }
+    }
+
+    // Apply block rotation
+    v0.position = rotateVertex(v0.position, rotation);
+    v1.position = rotateVertex(v1.position, rotation);
+    v2.position = rotateVertex(v2.position, rotation);
+    v3.position = rotateVertex(v3.position, rotation);
+
+    v0.normal = rotateNormal(v0.normal, rotation);
+    v1.normal = rotateNormal(v1.normal, rotation);
+    v2.normal = rotateNormal(v2.normal, rotation);
+    v3.normal = rotateNormal(v3.normal, rotation);
+
+    // Apply world position
+    v0.position += Vec3(worldX, worldY, worldZ);
+    v1.position += Vec3(worldX, worldY, worldZ);
+    v2.position += Vec3(worldX, worldY, worldZ);
+    v3.position += Vec3(worldX, worldY, worldZ);
+
+    // Add to mesh
+    uint32_t idx0 = outputMesh.addVertex(v0);
+    uint32_t idx1 = outputMesh.addVertex(v1);
+    uint32_t idx2 = outputMesh.addVertex(v2);
+    uint32_t idx3 = outputMesh.addVertex(v3);
+
+    MeshFace quadFace;
+    quadFace.indices[0] = idx0;
+    quadFace.indices[1] = idx1;
+    quadFace.indices[2] = idx2;
+    quadFace.indices[3] = idx3;
+    quadFace.vertexCount = 4;
+    quadFace.material = std::to_string(node.uvMin.u);
+
+    outputMesh.addFace(quadFace);
+
+    if (node.doubleSided) {
+        MeshFace backFace;
+        backFace.indices[0] = idx3;
+        backFace.indices[1] = idx2;
+        backFace.indices[2] = idx1;
+        backFace.indices[3] = idx0;
+        backFace.vertexCount = 4;
+        backFace.material = quadFace.material;
+        outputMesh.addFace(backFace);
+    }
 }
 
 Mat4 PrefabMesher::calculateNodeTransform(const Model& model, const ModelNode& node) const {
@@ -271,17 +368,26 @@ Mat4 PrefabMesher::extractRotation(const Mat4& matrix) const {
     return result;
 }
 
-bool PrefabMesher::getAtlasUVs(uint8_t atlasIndex, const Vec2& pixelOffset,
+bool PrefabMesher::getAtlasUVs(const ModelNode& node, const Vec2& pixelOffset,
     const Vec3& nodeSize, Vec2& uvMin, Vec2& uvMax) const {
 
-    const float atlasWidth = 1024.0f;
-    const float atlasHeight = 1024.0f;
-    const float tileSize = 32.0f;
+    float atlasWidthInUV = node.uvMax.u - node.uvMin.u;
+    float atlasHeightInUV = node.uvMax.v - node.uvMin.v;
 
-    uvMin.u = pixelOffset.u / atlasWidth;
-    uvMin.v = pixelOffset.v / atlasHeight;
-    uvMax.u = (pixelOffset.u + tileSize) / atlasWidth;
-    uvMax.v = (pixelOffset.v + tileSize) / atlasHeight;
+    float faceWidthPixels = nodeSize.x;
+    float faceHeightPixels = nodeSize.y;
+
+    uvMin.u = pixelOffset.u;
+    uvMin.v = pixelOffset.v;
+
+    float sourceTexWidth = (node.uvMax.u - node.uvMin.u) * textureRegistry->getAtlasWidth();
+    float sourceTexHeight = (node.uvMax.v - node.uvMin.v) * textureRegistry->getAtlasHeight();
+
+    float faceUVWidth = (faceWidthPixels / sourceTexWidth) * atlasWidthInUV;
+    float faceUVHeight = (faceHeightPixels / sourceTexHeight) * atlasHeightInUV;
+
+    uvMax.u = uvMin.u + faceUVWidth;
+    uvMax.v = uvMin.v + faceUVHeight;
 
     return true;
 }

@@ -17,20 +17,69 @@ Model* ModelRegistry::loadModel(const std::string& modelName) {
         return nullptr;
     }
 
-    if (modelPath == "CUBE") {
-        // TODO: Handle cube models
-        return nullptr;
+    if (modelPath == "EMPTY") {
+        Model* model = new Model();
+        models[modelName] = model;
+        return model;
     }
-
-    if (!std::filesystem::exists(modelPath)) {
-        std::cerr << "Model file does not exist: " << modelPath << "\n";
-        return nullptr;
-    }
-
-    ModelJson modelJson = parseBlockyModel(modelPath);
 
     Model* model = new Model();
-    ModelInitializer::parse(modelJson, &nodeNameManager, *model);
+
+    if (modelPath == "CUBE") {
+        ModelNode node;
+        node.nameId = nodeNameManager.getOrAddNameId("Cube");
+        node.position = Vec3(0, 0, 0);
+        node.orientation = Vec4::Identity();
+        node.offset = Vec3(0, 0, 0);
+        node.stretch = Vec3(1, 1, 1);
+        node.type = ModelNode::ShapeType::Box;
+        node.size = Vec3(32, 32, 32);
+        node.visible = true;
+        node.doubleSided = false;
+        node.shadingMode = ShadingMode::Standard;
+        node.gradientId = 0;
+        node.textureLayout.resize(6);
+        model->addNode(node);
+    }
+    else {
+        if (!std::filesystem::exists(modelPath)) {
+            std::cerr << "Model file does not exist: " << modelPath << "\n";
+            return nullptr;
+        }
+
+        ModelJson modelJson = parseBlockyModel(modelPath);
+        ModelInitializer::parse(modelJson, &nodeNameManager, *model);
+    }
+
+    std::string texturePath = findTexturePath(modelName);
+    if (!texturePath.empty() && texturePath != "EMPTY") {
+        const AtlasRegion* region = textureRegistry->getTextureRegion(texturePath);
+
+        if (region) {
+            float sourceTexWidth = static_cast<float>(region->pixelWidth);
+            float sourceTexHeight = static_cast<float>(region->pixelHeight);
+
+            float atlasWidthInUV = region->uvMax.u - region->uvMin.u;
+            float atlasHeightInUV = region->uvMax.v - region->uvMin.v;
+
+            for (int i = 0; i < model->nodeCount; i++) {
+                ModelNode& node = model->allNodes[i];
+
+                for (auto& layout : node.textureLayout) {
+                    // Convert pixel offsets to normalized UVs in source texture space
+                    float normalizedU = layout.offset.u / sourceTexWidth;
+                    float normalizedV = layout.offset.v / sourceTexHeight;
+
+                    // Transform to atlas space
+                    layout.offset.u = region->uvMin.u + (normalizedU * atlasWidthInUV);
+                    layout.offset.v = region->uvMin.v + (normalizedV * atlasHeightInUV);
+                }
+
+                node.uvMin = region->uvMin;
+                node.uvMax = region->uvMax;
+            }
+        }
+    }
 
     models[modelName] = model;
     return model;
@@ -39,6 +88,8 @@ Model* ModelRegistry::loadModel(const std::string& modelName) {
 std::string ModelRegistry::findModelPath(const std::string& modelName) {
     std::string itemsPath = assetPath + "/Server/Item/Items";
     std::string targetFile = modelName + ".json";
+
+    if (modelName == "Empty") return "EMPTY";
 
     std::function<std::string(const std::filesystem::path&)> searchRecursive =
         [&](const std::filesystem::path& dir) -> std::string {
@@ -62,20 +113,31 @@ std::string ModelRegistry::findModelPath(const std::string& modelName) {
     std::ifstream file(foundFilePath);
     nlohmann::json jsonData = nlohmann::json::parse(file);
 
-    if (!jsonData.contains("BlockType") || !jsonData["BlockType"].contains("DrawType")) {
-        return "";
+    // Check for CustomModel
+    if (jsonData.contains("BlockType") && jsonData["BlockType"].contains("CustomModel")) {
+        std::string customModelPath = jsonData["BlockType"]["CustomModel"];
+        return assetPath + "/Common/" + customModelPath;
     }
 
-    std::string drawType = jsonData["BlockType"]["DrawType"];
+    // Check for DrawType
+    if (jsonData.contains("BlockType") && jsonData["BlockType"].contains("DrawType")) {
+        std::string drawType = jsonData["BlockType"]["DrawType"];
 
-    if (drawType == "Cube") {
-        return "CUBE";
-    }
-    else if (drawType == "Model") {
-        if (jsonData["BlockType"].contains("CustomModel")) {
-            std::string customModelPath = jsonData["BlockType"]["CustomModel"];
-            return assetPath + "/Common/" + customModelPath;
+        if (drawType == "Cube") {
+            return "CUBE";
         }
+        else if (drawType == "Model") {
+            if (jsonData["BlockType"].contains("CustomModel")) {
+                std::string customModelPath = jsonData["BlockType"]["CustomModel"];
+                return assetPath + "/Common/" + customModelPath;
+            }
+        }
+    }
+
+    // Handle parent inheritance
+    if (jsonData.contains("Parent")) {
+        std::string parentName = jsonData["Parent"];
+        return findModelPath(parentName);
     }
 
     return "";
@@ -84,6 +146,8 @@ std::string ModelRegistry::findModelPath(const std::string& modelName) {
 std::string ModelRegistry::findTexturePath(const std::string& modelName) {
     std::string itemsPath = assetPath + "/Server/Item/Items";
     std::string targetFile = modelName + ".json";
+
+    if (modelName == "Empty") return "EMPTY";
 
     std::function<std::string(const std::filesystem::path&)> searchRecursive =
         [&](const std::filesystem::path& dir) -> std::string {

@@ -2,6 +2,10 @@
 #include <iostream>
 #include <string>
 
+/*
+HytaleWorldExporter.exe -p C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\Simple_Test.prefab.json -a C:\Users\brend\Desktop\Hytale\templates\Assets -o C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\output -n simple
+*/
+
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options]\n"
         << "\nRequired:\n"

@@ -11,48 +11,54 @@ bool OBJExporter::exportMesh(const Mesh& mesh, const std::string& filename,
 	return exportMeshes(meshes, filename, assetsPath, textureRegistry, options);
 }
 
-bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::string& filename, 
+bool OBJExporter::exportMeshes(const std::vector<Mesh>& meshes, const std::string& filename,
     const std::string& assetsPath, const TextureRegistry* textureRegistry, const OBJExportOptions& options) {
-	if (meshes.empty()) {
-		std::cerr << "No meshes to export" << std::endl;
-		return false;
-	}
+    if (meshes.empty()) {
+        std::cerr << "No meshes to export" << std::endl;
+        return false;
+    }
 
-	std::string baseName = filename;
-	if (baseName.size() > 4 && baseName.substr(baseName.size() - 4) == ".obj") {
-		baseName = baseName.substr(0, baseName.size() - 4);
-	}
+    std::string baseName = filename;
+    if (baseName.size() > 4 && baseName.substr(baseName.size() - 4) == ".obj") {
+        baseName = baseName.substr(0, baseName.size() - 4);
+    }
 
-	std::string objPath = options.outputDirectory + baseName + ".obj";
-	std::string mtlFilename = baseName + ".mtl";
-	std::string mtlPath = options.outputDirectory + mtlFilename;
+    // Ensure output directory has trailing slash
+    std::string outputDir = options.outputDirectory;
+    if (!outputDir.empty() && outputDir.back() != '/' && outputDir.back() != '\\') {
+        outputDir += '/';
+    }
 
-	std::ofstream objFile(objPath);
-	if (!objFile.is_open()) {
-		std::cerr << "Failed to open OBJ file: " << objPath << std::endl;
-		return false;
-	}
+    std::string objPath = outputDir + baseName + ".obj";
+    std::string mtlFilename = baseName + ".mtl";
+    std::string mtlPath = outputDir + mtlFilename;
 
-	if (!writeOBJ(objFile, meshes, mtlFilename, options)) {
-		objFile.close();
-		return false;
-	}
-	objFile.close();
+    std::ofstream objFile(objPath);
+    if (!objFile.is_open()) {
+        std::cerr << "Failed to open OBJ file: " << objPath << std::endl;
+        return false;
+    }
 
-	if (options.exportMTL) {
-		if (!writeMTL(mtlPath, meshes, textureRegistry, options)) {
-			return false;
-		}
+    if (!writeOBJ(objFile, meshes, mtlFilename, options)) {
+        objFile.close();
+        return false;
+    }
+    objFile.close();
 
-		if (options.exportTextures) {
-			std::string texturePath = options.outputDirectory + baseName + "_atlas.png";
-			if (!exportTextureAtlas(textureRegistry, assetsPath, texturePath)) {
-				std::cerr << "Warning: Failed to export texture atlas" << std::endl;
-			}
-		}
-	}
+    if (options.exportMTL) {
+        if (!writeMTL(mtlPath, meshes, textureRegistry, options)) {
+            return false;
+        }
 
-	return true;	
+        if (options.exportTextures) {
+            std::string texturePath = outputDir + baseName + "_atlas.png";
+            if (!exportTextureAtlas(textureRegistry, assetsPath, texturePath)) {
+                std::cerr << "Warning: Failed to export texture atlas" << std::endl;
+            }
+        }
+    }
+
+    return true;
 }
 
 bool OBJExporter::writeOBJ(std::ofstream& file,
@@ -199,5 +205,12 @@ bool OBJExporter::writeMTL(const std::string& filename,
 
 bool OBJExporter::exportTextureAtlas(const TextureRegistry* textureRegistry, const std::string& assetsPath,
     const std::string& filename) {
-    return false;
+
+    if (!textureRegistry) {
+        std::cerr << "Error: TextureRegistry is null" << std::endl;
+        return false;
+    }
+
+    textureRegistry->exportAtlas(filename);
+    return true;
 }

@@ -58,7 +58,7 @@ Model Model::clone() const {
 }
 
 void Model::attach(Model* attachment, NodeNameManager* nodeNameManager,
-    uint8_t* atlasIndex, Vec2* uvOffset, int forcedTargetNodeNameId) {
+    Vec2 uvMin, Vec2 uvMax, Vec2* uvOffset, int forcedTargetNodeNameId) {
 
     if (!attachment || attachment->nodeCount == 0) return;
 
@@ -67,13 +67,14 @@ void Model::attach(Model* attachment, NodeNameManager* nodeNameManager,
     for (int rootIndex : attachment->rootNodes) {
         ModelNode& attachmentRoot = attachment->allNodes[rootIndex];
         recurseAttach(attachment, attachmentRoot, -1, nodeNameManager,
-            atlasIndex, uvOffset, forcedAttachment);
+            uvMin, uvMax, uvOffset, forcedAttachment);
     }
 }
 
-void Model::setAtlasIndex(uint8_t atlasIndex) {
+void Model::setUV(Vec2 min, Vec2 max) {
     for (int i = 0; i < nodeCount; i++) {
-        allNodes[i].atlasIndex = atlasIndex;
+        allNodes[i].uvMin = min;
+        allNodes[i].uvMax = max;
     }
 }
 
@@ -87,11 +88,9 @@ void Model::setGradientId(uint8_t gradientId) {
 void Model::offsetUVs(Vec2 offset) {
     for (int i = 0; i < nodeCount; i++) {
         ModelNode& node = allNodes[i];
-        if (node.textureLayout) {
-            for (int j = 0; j < node.textureLayoutSize; j++) {
-                node.textureLayout[j].offset.u += offset.u;
-                node.textureLayout[j].offset.v += offset.v;
-            }
+        for (auto& layout : node.textureLayout) {
+            layout.offset.u += offset.u;
+            layout.offset.v += offset.v;
         }
     }
 }
@@ -126,20 +125,17 @@ void Model::ensureNodeCountAllocated(int required, int growth) {
 
 void Model::recurseAttach(Model* attachment, ModelNode& attachmentNode,
     int parentNodeIndex, NodeNameManager* nodeNameManager,
-    uint8_t* atlasIndex, Vec2* uvOffset, bool forcedAttachment) {
+    Vec2 uvMin, Vec2 uvMax, Vec2* uvOffset, bool forcedAttachment) {
 
     ModelNode nodeCopy = attachmentNode.clone();
 
-    if (atlasIndex) {
-        nodeCopy.atlasIndex = *atlasIndex;
-    }
+    nodeCopy.uvMin = uvMin;
+    nodeCopy.uvMax = uvMax;
 
     if (uvOffset) {
-        if (nodeCopy.textureLayout) {
-            for (int i = 0; i < nodeCopy.textureLayoutSize; i++) {
-                nodeCopy.textureLayout[i].offset.u += uvOffset->u;
-                nodeCopy.textureLayout[i].offset.v += uvOffset->v;
-            }
+        for (auto& layout : nodeCopy.textureLayout) {
+            layout.offset.u += uvOffset->u;
+            layout.offset.v += uvOffset->v;
         }
     }
 
@@ -149,7 +145,7 @@ void Model::recurseAttach(Model* attachment, ModelNode& attachmentNode,
     for (int childIndex : attachmentNode.children) {
         ModelNode& childNode = attachment->allNodes[childIndex];
         recurseAttach(attachment, childNode, newNodeIndex, nodeNameManager,
-            atlasIndex, uvOffset, forcedAttachment);
+            uvMin, uvMax, uvOffset, forcedAttachment);
     }
 }
 
@@ -186,7 +182,6 @@ bool NodeNameManager::tryGetIdFromName(const std::string& name, int& outId) cons
 void ModelInitializer::parse(const uint8_t* data, size_t dataSize,
     NodeNameManager* nodeNameManager, Model& blockyModel) {
     // Binary parsing not implemented yet
-    // This would parse the binary .blockymodel format if needed
 }
 
 void ModelInitializer::parse(const ModelJson& json,
@@ -230,8 +225,7 @@ void ModelInitializer::recurseParseNode(ModelNodeJson& jsonNode, Model& model,
 
     if (!jsonNode.shape.textureLayout.empty()) {
         if (node.type == ModelNode::ShapeType::Box) {
-            node.textureLayoutSize = 6;
-            node.textureLayout = new ModelFaceTextureLayout[6];
+            node.textureLayout.resize(6);
             node.textureLayout[0] = getFaceLayout(jsonNode.shape.textureLayout, "front");
             node.textureLayout[1] = getFaceLayout(jsonNode.shape.textureLayout, "back");
             node.textureLayout[2] = getFaceLayout(jsonNode.shape.textureLayout, "right");
@@ -240,8 +234,7 @@ void ModelInitializer::recurseParseNode(ModelNodeJson& jsonNode, Model& model,
             node.textureLayout[5] = getFaceLayout(jsonNode.shape.textureLayout, "bottom");
         }
         else if (node.type == ModelNode::ShapeType::Quad) {
-            node.textureLayoutSize = 1;
-            node.textureLayout = new ModelFaceTextureLayout[1];
+            node.textureLayout.resize(1);
             node.textureLayout[0] = getFaceLayout(jsonNode.shape.textureLayout, "front");
         }
     }
@@ -259,34 +252,20 @@ ModelNode ModelNode::clone() const {
 
     cloned.nameId = nameId;
     cloned.children = children;
-
     cloned.position = position;
     cloned.orientation = orientation;
     cloned.offset = offset;
     cloned.stretch = stretch;
-
     cloned.proceduralOffset = proceduralOffset;
     cloned.proceduralRotation = proceduralRotation;
-
     cloned.type = type;
     cloned.size = size;
     cloned.quadNormalDirection = quadNormalDirection;
-
-    cloned.textureLayoutSize = textureLayoutSize;
-    if (textureLayout && textureLayoutSize > 0) {
-        cloned.textureLayout = new ModelFaceTextureLayout[textureLayoutSize];
-        for (int i = 0; i < textureLayoutSize; i++) {
-            cloned.textureLayout[i] = textureLayout[i];
-        }
-    }
-    else {
-        cloned.textureLayout = nullptr;
-    }
-
-    cloned.atlasIndex = atlasIndex;
+    cloned.textureLayout = textureLayout;
+    cloned.uvMin = uvMin;
+    cloned.uvMax = uvMax;
     cloned.gradientId = gradientId;
     cloned.shadingMode = shadingMode;
-
     cloned.visible = visible;
     cloned.doubleSided = doubleSided;
     cloned.isPiece = isPiece;
