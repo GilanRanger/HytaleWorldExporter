@@ -1,4 +1,5 @@
 #include "../data/Model.h"
+#include <iostream>
 #include <cstring>
 #include <algorithm>
 
@@ -73,8 +74,10 @@ void Model::attach(Model* attachment, NodeNameManager* nodeNameManager,
 
 void Model::setUV(Vec2 min, Vec2 max) {
     for (int i = 0; i < nodeCount; i++) {
-        allNodes[i].uvMin = min;
-        allNodes[i].uvMax = max;
+        for (auto& layout : allNodes[i].textureLayout) {
+            layout.uvMin = min;
+            layout.uvMax = max;
+        }
     }
 }
 
@@ -128,9 +131,6 @@ void Model::recurseAttach(Model* attachment, ModelNode& attachmentNode,
     Vec2 uvMin, Vec2 uvMax, Vec2* uvOffset, bool forcedAttachment) {
 
     ModelNode nodeCopy = attachmentNode.clone();
-
-    nodeCopy.uvMin = uvMin;
-    nodeCopy.uvMax = uvMax;
 
     if (uvOffset) {
         for (auto& layout : nodeCopy.textureLayout) {
@@ -226,6 +226,7 @@ void ModelInitializer::recurseParseNode(ModelNodeJson& jsonNode, Model& model,
     if (!jsonNode.shape.textureLayout.empty()) {
         if (node.type == ModelNode::ShapeType::Box) {
             node.textureLayout.resize(6);
+
             node.textureLayout[0] = getFaceLayout(jsonNode.shape.textureLayout, "front");
             node.textureLayout[1] = getFaceLayout(jsonNode.shape.textureLayout, "back");
             node.textureLayout[2] = getFaceLayout(jsonNode.shape.textureLayout, "right");
@@ -262,8 +263,6 @@ ModelNode ModelNode::clone() const {
     cloned.size = size;
     cloned.quadNormalDirection = quadNormalDirection;
     cloned.textureLayout = textureLayout;
-    cloned.uvMin = uvMin;
-    cloned.uvMax = uvMax;
     cloned.gradientId = gradientId;
     cloned.shadingMode = shadingMode;
     cloned.visible = visible;
@@ -304,6 +303,9 @@ ModelFaceTextureLayout ModelInitializer::getFaceLayout(
         layout.mirrorX = faceLayout.mirror.u != 0.0f;
         layout.mirrorY = faceLayout.mirror.v != 0.0f;
         layout.hidden = false;
+    }
+    else {
+        layout.hidden = true;
     }
 
     return layout;

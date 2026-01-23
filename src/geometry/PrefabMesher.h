@@ -32,7 +32,7 @@ private:
     Vec3 transformNormal(const Mat4& matrix, const Vec3& normal) const;
     Mat4 extractRotation(const Mat4& matrix) const;
 
-    bool getAtlasUVs(const ModelNode& node, const Vec2& pixelOffset,
+    bool getAtlasUVs(const ModelFaceTextureLayout& faceLayout, const Vec2& pixelOffset,
         const Vec3& nodeSize, Vec2& uvMin, Vec2& uvMax) const;
 
     void rotateUVs(Vec2& uv0, Vec2& uv1, Vec2& uv2, Vec2& uv3, int rotation) const;

@@ -40,6 +40,12 @@ std::unique_ptr<Prefab> PrefabLoader::loadFromJson(const std::string& jsonData) 
 
         if (j.contains("blocks") && j["blocks"].is_array()) {
             for (const auto& blockJson : j["blocks"]) {
+
+                // Skip filler blocks (other blocks in multi-block models)
+                if (blockJson.contains("filler")) {
+                    continue;
+                }
+
                 PrefabBlock block;
 
                 if (blockJson.contains("x")) block.x = blockJson["x"].get<int>();
@@ -49,10 +55,6 @@ std::unique_ptr<Prefab> PrefabLoader::loadFromJson(const std::string& jsonData) 
 
                 if (blockJson.contains("rotation")) {
                     block.rotation = blockJson["rotation"].get<uint16_t>();
-                }
-
-                if (blockJson.contains("filler")) {
-                    block.filler = blockJson["filler"].get<uint16_t>();
                 }
 
                 if (blockJson.contains("components") && blockJson["components"].is_object()) {

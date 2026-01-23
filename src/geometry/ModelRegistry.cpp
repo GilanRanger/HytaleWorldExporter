@@ -30,7 +30,7 @@ Model* ModelRegistry::loadModel(const std::string& modelName) {
         node.nameId = nodeNameManager.getOrAddNameId("Cube");
         node.position = Vec3(0, 0, 0);
         node.orientation = Vec4::Identity();
-        node.offset = Vec3(0, 0, 0);
+        node.offset = Vec3(0, 16, 0);
         node.stretch = Vec3(1, 1, 1);
         node.type = ModelNode::ShapeType::Box;
         node.size = Vec3(32, 32, 32);
@@ -65,18 +65,93 @@ Model* ModelRegistry::loadModel(const std::string& modelName) {
             for (int i = 0; i < model->nodeCount; i++) {
                 ModelNode& node = model->allNodes[i];
 
-                for (auto& layout : node.textureLayout) {
-                    // Convert pixel offsets to normalized UVs in source texture space
-                    float normalizedU = layout.offset.u / sourceTexWidth;
-                    float normalizedV = layout.offset.v / sourceTexHeight;
-
-                    // Transform to atlas space
-                    layout.offset.u = region->uvMin.u + (normalizedU * atlasWidthInUV);
-                    layout.offset.v = region->uvMin.v + (normalizedV * atlasHeightInUV);
+                std::string nodeName = "Unnamed";
+                if (node.nameId != -1) {
+                    nodeNameManager.tryGetNameFromId(node.nameId, nodeName);
                 }
 
-                node.uvMin = region->uvMin;
-                node.uvMax = region->uvMax;
+                for (size_t faceIdx = 0; faceIdx < node.textureLayout.size(); faceIdx++) {
+                    auto& layout = node.textureLayout[faceIdx];
+
+                    std::string faceName;
+                    Vec2 faceDimensions;
+
+                    if (node.type == ModelNode::ShapeType::Box) {
+                        switch (faceIdx) {
+                        case 0: // Front (-Z): width × height
+                            faceName = "Front (-Z)";
+                            faceDimensions = Vec2(node.size.x, node.size.y);
+                            faceDimensions.u *= node.stretch.x;  // width stretch
+                            faceDimensions.v *= node.stretch.y;  // height stretch
+                            break;
+                        case 1: // Back (+Z): width × height
+                            faceName = "Back (+Z)";
+                            faceDimensions = Vec2(node.size.x, node.size.y);
+                            faceDimensions.u *= node.stretch.x;  // width stretch
+                            faceDimensions.v *= node.stretch.y;  // height stretch
+                            break;
+                        case 2: // Right (+X): depth × height
+                            faceName = "Right (+X)";
+                            faceDimensions = Vec2(node.size.z, node.size.y);
+                            faceDimensions.u *= node.stretch.z;  // depth stretch
+                            faceDimensions.v *= node.stretch.y;  // height stretch
+                            break;
+                        case 3: // Left (-X): depth × height
+                            faceName = "Left (-X)";
+                            faceDimensions = Vec2(node.size.z, node.size.y);
+                            faceDimensions.u *= node.stretch.z;  // depth stretch
+                            faceDimensions.v *= node.stretch.y;  // height stretch
+                            break;
+                        case 4: // Top (+Y): width × depth
+                            faceName = "Top (+Y)";
+                            faceDimensions = Vec2(node.size.x, node.size.z);
+                            faceDimensions.u *= node.stretch.x;  // width stretch
+                            faceDimensions.v *= node.stretch.z;  // depth stretch
+                            break;
+                        case 5: // Bottom (-Y): width × depth
+                            faceName = "Bottom (-Y)";
+                            faceDimensions = Vec2(node.size.x, node.size.z);
+                            faceDimensions.u *= node.stretch.x;  // width stretch
+                            faceDimensions.v *= node.stretch.z;  // depth stretch
+                            break;
+                        default:
+                            faceName = "Unknown";
+                            faceDimensions = Vec2(node.size.x, node.size.y);
+                            break;
+                        }
+                    }
+                    else if (node.type == ModelNode::ShapeType::Quad) {
+                        faceName = "Quad";
+                        faceDimensions = Vec2(node.size.x, node.size.y);
+                        faceDimensions.u *= node.stretch.x;
+                        faceDimensions.v *= node.stretch.y;
+                    }
+                    else {
+                        faceName = "None";
+                        faceDimensions = Vec2(0, 0);
+                    }
+
+                    // Apply stretch multiplier
+                    Vec2 stretchedDimensions = faceDimensions;
+                    stretchedDimensions.u *= node.stretch.x;
+                    stretchedDimensions.v *= node.stretch.y;
+
+                    // Convert pixel offset to normalized UV in source texture
+                    float normalizedUMin = layout.offset.u / sourceTexWidth;
+                    float normalizedVMin = layout.offset.v / sourceTexHeight;
+                    float normalizedUMax = (layout.offset.u + faceDimensions.u) / sourceTexWidth;
+                    float normalizedVMax = (layout.offset.v + faceDimensions.v) / sourceTexHeight;
+
+                    // Transform to atlas space
+                    layout.uvMin.u = region->uvMin.u + (normalizedUMin * atlasWidthInUV);
+                    layout.uvMin.v = region->uvMin.v + (normalizedVMin * atlasHeightInUV);
+                    layout.uvMax.u = region->uvMin.u + (normalizedUMax * atlasWidthInUV);
+                    layout.uvMax.v = region->uvMin.v + (normalizedVMax * atlasHeightInUV);
+
+                    // Update offset to atlas space as well
+                    layout.offset.u = layout.uvMin.u;
+                    layout.offset.v = layout.uvMin.v;
+                }
             }
         }
     }

@@ -18,13 +18,15 @@ enum class ShadingMode {
 
 struct ModelFaceTextureLayout {
 	Vec2 offset;
+	Vec2 uvMin;
+	Vec2 uvMax;
 	int angle;
 	bool mirrorX;
 	bool mirrorY;
 	bool hidden;
 
 	ModelFaceTextureLayout()
-		: offset(0, 0), angle(0), mirrorX(false), mirrorY(false), hidden(false) {
+		: offset(0, 0), uvMin(0, 0), uvMax(0, 0), angle(0), mirrorX(false), mirrorY(false), hidden(false) {
 	}
 };
 
@@ -63,8 +65,6 @@ struct ModelNode {
 
 	// Texture
 	std::vector<ModelFaceTextureLayout> textureLayout;
-	Vec2 uvMin;
-	Vec2 uvMax;
 	uint8_t gradientId;
 	ShadingMode shadingMode;
 
@@ -80,7 +80,7 @@ struct ModelNode {
 		proceduralOffset(0, 0, 0), proceduralRotation(0, 0, 0),
 		type(ShapeType::None), size(0, 0, 0),
 		quadNormalDirection(QuadNormal::PlusZ),
-		uvMin(0, 0), uvMax(0, 0), gradientId(0), shadingMode(ShadingMode::Standard),
+		gradientId(0), shadingMode(ShadingMode::Standard),
 		visible(true), doubleSided(false), isPiece(false) {
 	}
 

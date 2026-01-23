@@ -6,6 +6,14 @@
 HytaleWorldExporter.exe -p C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\Simple_Test.prefab.json -a C:\Users\brend\Desktop\Hytale\templates\Assets -o C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\output -n simple
 */
 
+/*
+HytaleWorldExporter.exe -p C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\Model_Test.prefab.json -a C:\Users\brend\Desktop\Hytale\templates\Assets -o C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\output -n complex
+*/
+
+/*
+HytaleWorldExporter.exe -p C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\OasisSection.prefab.json -a C:\Users\brend\Desktop\Hytale\templates\Assets -o C:\Users\brend\Desktop\Hytale\external_tools\HytaleWorldExporter\test\output -n oasis
+*/
+
 void printUsage(const char* programName) {
     std::cerr << "Usage: " << programName << " [options]\n"
         << "\nRequired:\n"

@@ -15,11 +15,6 @@ void PrefabMesher::generatePrefabMesh(const Prefab& prefab, Mesh& outputMesh) {
 
         Model* model = modelRegistry->getModel(block.name);
 
-        std::cout << block.name << " ->     " 
-            << "(" << model->allNodes[0].uvMin.u << ", " << model->allNodes[0].uvMin.v << ") "
-            << "(" << model->allNodes[0].uvMax.u << ", " << model->allNodes[0].uvMax.v << ") "
-            << "\n";
-
         if (!model || model->nodeCount == 0) continue;
 
         // Generate mesh for all nodes in the model
@@ -145,7 +140,7 @@ void PrefabMesher::generateBoxFace(Mesh& outputMesh, const Model& model,
 
     // Apply UVs
     Vec2 uvMin, uvMax;
-    if (getAtlasUVs(node, faceLayout.offset, node.size, uvMin, uvMax)) {
+    if (getAtlasUVs(faceLayout, faceLayout.offset, node.size, uvMin, uvMax)) {
 
         v0.uv = Vec2(uvMin.u, uvMax.v);
         v1.uv = Vec2(uvMax.u, uvMax.v);
@@ -196,7 +191,7 @@ void PrefabMesher::generateBoxFace(Mesh& outputMesh, const Model& model,
     quadFace.indices[3] = idx3;
     quadFace.vertexCount = 4;
     // TODO: Replace this with not just a random material assignment
-    quadFace.material = std::to_string(node.uvMax.u);
+    quadFace.material = std::to_string(node.nameId);
     outputMesh.addFace(quadFace);
 }
 
@@ -245,7 +240,7 @@ void PrefabMesher::generateQuadFace(Mesh& outputMesh, const Model& model,
     // Apply UVs
     Vec2 uvMin, uvMax;
     Vec3 quadSize(node.size.x, node.size.y, 0);
-    if (getAtlasUVs(node, faceLayout.offset, quadSize, uvMin, uvMax)) {
+    if (getAtlasUVs(faceLayout, faceLayout.offset, quadSize, uvMin, uvMax)) {
         v0.uv = Vec2(uvMin.u, uvMax.v);
         v1.uv = Vec2(uvMax.u, uvMax.v);
         v2.uv = Vec2(uvMax.u, uvMin.v);
@@ -294,7 +289,7 @@ void PrefabMesher::generateQuadFace(Mesh& outputMesh, const Model& model,
     quadFace.indices[2] = idx2;
     quadFace.indices[3] = idx3;
     quadFace.vertexCount = 4;
-    quadFace.material = std::to_string(node.uvMin.u);
+    quadFace.material = std::to_string(node.nameId);
 
     outputMesh.addFace(quadFace);
 
@@ -368,26 +363,11 @@ Mat4 PrefabMesher::extractRotation(const Mat4& matrix) const {
     return result;
 }
 
-bool PrefabMesher::getAtlasUVs(const ModelNode& node, const Vec2& pixelOffset,
+bool PrefabMesher::getAtlasUVs(const ModelFaceTextureLayout& faceLayout, const Vec2& pixelOffset,
     const Vec3& nodeSize, Vec2& uvMin, Vec2& uvMax) const {
 
-    float atlasWidthInUV = node.uvMax.u - node.uvMin.u;
-    float atlasHeightInUV = node.uvMax.v - node.uvMin.v;
-
-    float faceWidthPixels = nodeSize.x;
-    float faceHeightPixels = nodeSize.y;
-
-    uvMin.u = pixelOffset.u;
-    uvMin.v = pixelOffset.v;
-
-    float sourceTexWidth = (node.uvMax.u - node.uvMin.u) * textureRegistry->getAtlasWidth();
-    float sourceTexHeight = (node.uvMax.v - node.uvMin.v) * textureRegistry->getAtlasHeight();
-
-    float faceUVWidth = (faceWidthPixels / sourceTexWidth) * atlasWidthInUV;
-    float faceUVHeight = (faceHeightPixels / sourceTexHeight) * atlasHeightInUV;
-
-    uvMax.u = uvMin.u + faceUVWidth;
-    uvMax.v = uvMin.v + faceUVHeight;
+    uvMin = faceLayout.uvMin;
+    uvMax = faceLayout.uvMax;
 
     return true;
 }
@@ -405,8 +385,17 @@ void PrefabMesher::rotateUVs(Vec2& uv0, Vec2& uv1, Vec2& uv2, Vec2& uv3, int rot
 }
 
 Vec3 PrefabMesher::rotateVertex(const Vec3& vertex, uint16_t rotation) const {
-    // TODO: Implement block rotation based on rotation value
-    return vertex;
+    // Rotation for now is around Y-axis in 90-degree increments (change to handle more complicated rotations)
+    int steps = rotation % 4;
+    Vec3 result = vertex;
+    for (int i = 0; i < steps; ++i) {
+        float newX = result.z;
+        float newZ = -result.x;
+        result.x = newX;
+        result.z = newZ;
+    }
+
+    return result;
 }
 
 Vec3 PrefabMesher::rotateNormal(const Vec3& normal, uint16_t rotation) const {
